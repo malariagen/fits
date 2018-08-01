@@ -7,11 +7,11 @@ using json = nlohmann::json;
 
 UpdateSanger::UpdateSanger () {
 	updateChangedFlowcellData() ;
-/*
+
 	// Update metadata
 	addLaneMetrics() ;
 	addTaxonID() ;
-*/
+
 }
 
 
@@ -212,6 +212,7 @@ void UpdateSanger::addFilesForSampleFromBaton ( string mlwh_sample_id , vector <
 				if ( tag != fc["tag_index"].asString() ) continue ;
 				flowcell = fc ;
 				flowcell_found = true ;
+				fc["flowcell_position"] = lane ;
 				for ( auto key:flowcell_keys ) dab.setFileTag ( file_id , key , fc[key] , note ) ;
 
 				sql = "UPDATE id_iseq_flowcell_tmp_no_file SET missing_file=0 WHERE id=" + fc["id_iseq_flowcell_tmp"].asString() ;
