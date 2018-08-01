@@ -1,0 +1,47 @@
+// ANNOTATE WHERE THERE IS BOTH BAM AND CRAM FILE FOR THE SAME DATA
+INSERT IGNORE INTO file_relation (parent,child,relation)
+SELECT f1.id,f2.id,3595 FROM file f1,file f2
+WHERE f1.storage=1 AND f2.storage=1
+AND f1.full_path LIKE "%.bam"
+AND REPLACE(f1.full_path,'.bam','.cram')=f2.full_path;
+
+
+
+// GET FILES FOR OXFORD CODES
+SELECT DISTINCT value,full_path FROM vw_sample_tag,vw_sample_file
+WHERE tag_id in (3561,3589)
+AND vw_sample_file.sample_id=vw_sample_tag.sample_id
+AND full_path NOT LIKE "%\_phix%"
+AND full_path NOT LIKE "%\_human%"
+AND full_path NOT LIKE "%#0.%"
+AND NOT EXISTS (SELECT * FROM file_relation WHERE file_relation.relation=3595 AND file_relation.parent=vw_sample_file.file_id)
+AND file_id IN (SELECT vw_file_tag.file_id FROM vw_file_tag WHERE vw_file_tag.name='file type' AND value in ('bam','cram'))
+AND file_id IN (SELECT vw_file_tag.file_id FROM vw_file_tag WHERE vw_file_tag.name='manual qc' AND value='1')
+AND value IN 
+('PD0165-C','PD0166-C','PD0167-C','PD0168-C','PD0169-C','PD0170-C','PD0171-C','PD0172-C','PD0173-C',...)
+ORDER BY value,full_path;
+
+
+
+// SANITY CHECK: NO FILE >1 SAMPLE
+SELECT file_id,count(*) AS cnt from sample2file
+GROUP BY file_id
+HAVING cnt>1;
+== EMPTY LIST
+
+
+// SOLARIS <=> FITS OXCODE MISMATCHES VIA FILE PATHS
+select * from tmp_solaris_files 
+where ox_code!=fits_ox_code
+AND ox_code!=concat(fits_ox_code,'X');
+
+
+// ADD "sample supplier name" FROM file2tag to sample2tag
+? DELETE FROM sample2tag WHERE tag_id=3589;
+INSERT IGNORE INTO sample2tag (sample_id,value,tag_id)
+SELECT sample_id,value,tag_id FROM file2tag,sample2file WHERE tag_id=3589 AND file2tag.file_id=sample2file.file_id;
+
+
+// INSERT MISSING FILE TYPES
+INSERT INTO file2tag (file_id,tag_id,value)
+SELECT file.id,3576,substr(filename,length(filename)+2-instr(reverse(filename),".")) FROM file WHERE NOT EXISTS (SELECT * FROM vw_file_tag WHERE vw_file_tag.name="file type" AND file_id=file.id);
