@@ -29,6 +29,7 @@ void UpdateSanger::updatePivotView ( string table ) {
 	sql = "SELECT * FROM tag WHERE id IN (SELECT DISTINCT tag_id FROM "+table+"2tag)" ;
 	query ( dab.ft , r , sql ) ;
 	while ( r.getMap(datamap) ) {
+		if ( !datamap["use_for_pivot"].asInt() ) continue ;
 		string tag_id = datamap["id"].asString() ;
 		string tag_name = datamap["name"].asString() ;
 		for ( uint32_t p = 0 ; p < tag_name.size() ; p++ ) {
@@ -39,7 +40,9 @@ void UpdateSanger::updatePivotView ( string table ) {
 		parts.push_back ( "\n" + part ) ;
 	}
 
-	sql = "CREATE OR REPLACE VIEW `"+view+"` AS SELECT " + implode(parts,false) + " \nFROM " + table ;
+	sql = "CREATE OR REPLACE VIEW `"+view+"` AS SELECT "+table+".id AS fits_"+table+"_id," ;
+	if ( table == "file" ) sql += "file.full_path AS full_path," ;
+	sql += implode(parts,false) + " \nFROM " + table ;
 cout << sql << endl ;
 	dab.ft.exec ( sql ) ;
 }
