@@ -8,6 +8,8 @@
 class UpdateSanger : public StringTools {
 public:
 	UpdateSanger() ;
+	void updateFromMLWH () ;
+	void updatePivotView ( string table ) ;
 
 protected:
 	void report ( string s ) ;

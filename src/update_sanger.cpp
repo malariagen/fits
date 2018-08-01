@@ -6,14 +6,43 @@ using namespace std ;
 using json = nlohmann::json;
 
 UpdateSanger::UpdateSanger () {
+}
+
+void UpdateSanger::updateFromMLWH () {
 	updateChangedFlowcellData() ;
 
 	// Update metadata
 	addLaneMetrics() ;
 	addTaxonID() ;
-
 }
 
+void UpdateSanger::updatePivotView ( string table ) {
+	cout << "UPDATING " << table << endl ;
+
+	string view = "vw_pivot_" + table ;
+
+	SQLresult r ;
+	SQLmap datamap ;
+	string sql ;
+
+	vector <string> parts ;
+	sql = "SELECT * FROM tag WHERE id IN (SELECT DISTINCT tag_id FROM "+table+"2tag)" ;
+	query ( dab.ft , r , sql ) ;
+	while ( r.getMap(datamap) ) {
+		string tag_id = datamap["id"].asString() ;
+		string tag_name = datamap["name"].asString() ;
+		for ( uint32_t p = 0 ; p < tag_name.size() ; p++ ) {
+			if ( tag_name[p] == ' ' ) tag_name[p] = '_' ; // Space => underscore
+			else if ( tag_name[p] >= 'A' && tag_name[p] <= 'Z' ) tag_name[p] = tag_name[p]-'A'+'a' ; // Lowercase
+		}
+		string part = "(SELECT group_concat(`value` separator '|') FROM "+table+"2tag WHERE "+table+"_id="+table+".id AND tag_id="+tag_id+" GROUP BY `tag_id`) AS " + tag_name ;
+		parts.push_back ( "\n" + part ) ;
+	}
+
+	sql = "CREATE OR REPLACE VIEW `"+view+"` AS SELECT " + implode(parts,false) + " \nFROM " + table ;
+cout << sql << endl ;
+	dab.ft.exec ( sql ) ;
+}
 
 vector <string> UpdateSanger::getMLWHSampleIDsWithoutFiles () {
 	vector <string> mlwh_samples_todo ;

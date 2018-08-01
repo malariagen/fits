@@ -1,6 +1,32 @@
 #include "command_list.h"
 
 
+CommandLineParameterParser::CommandLineParameterParser (int argc, char *argv[]) {
+    if ( argc == 1 ) return ; // No parameters
+    command = argv[1] ;
+    string last_key ;
+    for ( int pos = 2 ; pos < argc ; pos++ ) {
+        if ( *(argv[pos]) == '-' ) {
+            if ( !last_key.empty() ) parameters.push_back ( CommandLineParameter ( last_key ) ) ;
+            last_key = argv[pos] ;
+            continue ;
+        }
+        parameters.push_back ( CommandLineParameter ( last_key , argv[pos] ) ) ;
+        last_key.clear() ;
+    }
+    if ( !last_key.empty() ) parameters.push_back ( CommandLineParameter ( last_key ) ) ;
+}
+
+int32_t CommandLineParameterParser::getParameterID ( string key ) {
+    for ( uint32_t p = 0 ; p < parameters.size() ; p++ ) {
+        if ( parameters[p].key == key ) return (int32_t) p ;
+    }
+    return -1 ;
+}
+
+
+//________________________________________________________________________________________________________________________
+
 string CommandList::constructSQLconditions ( const ConditionParserElement &e ) {
     string ret ;
     if ( e.type == ConditionParserElementType::ROOT || e.type == ConditionParserElementType::SUB ) {

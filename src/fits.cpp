@@ -29,6 +29,14 @@ int main(int argc, char *argv[]) {
         }
     } else if ( clp.command == "update_sanger" ) {
         UpdateSanger ufs ;
+
+        if ( clp.getParameterID("--pivot_views") != -1 ) {
+            ufs.updatePivotView ( "file" ) ;
+            ufs.updatePivotView ( "sample" ) ;
+        } else {
+            ufs.updateFromMLWH() ;
+        }
+
     } else {
         cout << "Unknown command " << clp.command << endl ;
         return 1 ;

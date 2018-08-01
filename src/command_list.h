@@ -13,21 +13,8 @@ public:
 
 class CommandLineParameterParser {
 public:
-    CommandLineParameterParser (int argc, char *argv[]) {
-        if ( argc == 1 ) return ; // No parameters
-        command = argv[1] ;
-        string last_key ;
-        for ( int pos = 2 ; pos < argc ; pos++ ) {
-            if ( *(argv[pos]) == '-' ) {
-                if ( !last_key.empty() ) parameters.push_back ( CommandLineParameter ( last_key ) ) ;
-                last_key = argv[pos] ;
-                continue ;
-            }
-            parameters.push_back ( CommandLineParameter ( last_key , argv[pos] ) ) ;
-            last_key.clear() ;
-        }
-        if ( !last_key.empty() ) parameters.push_back ( CommandLineParameter ( last_key ) ) ;
-    }
+    CommandLineParameterParser (int argc, char *argv[]) ;
+    int32_t getParameterID ( string key ) ;
     string command ;
     vector <CommandLineParameter> parameters ;
 } ;
