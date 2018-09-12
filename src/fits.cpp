@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
     } else if ( clp.command == "update_sanger" ) {
         UpdateSanger ufs ;
 
-        if ( clp.getParameterID("--pivot_views") != -1 ) {
+        if ( clp.getParameterID("--pivot_views") != -1 ) { // ./fits update_sanger --pivot_views
             ufs.updatePivotView ( "file" ) ;
             ufs.updatePivotView ( "sample" ) ;
         } else {
