@@ -20,6 +20,10 @@ void UpdateSanger::updateFromMLWH () {
 void UpdateSanger::fixMissingMetadata () {
 	fixMissingMetadataForTag ( "sequenscape_sample_name" , "sanger_sample_id" ) ; // Missing Sequenscape sample name
 	fixMissingMetadataForTag ( "MLWH taxon ID" , "taxon_id" ) ; // Missing taxon id
+
+	// Add sequenscape study name as Alfresco study where it fits the pattern
+	string sql = "INSERT IGNORE INTO sample2tag (sample_id,tag_id,`value`,`note`) SELECT s1.sample_id,3604,s1.value,'Inferred from sequenscape study name' FROM sample2tag s1 WHERE s1.tag_id=3594 AND s1.sample_id NOT IN (select DISTINCT s2.sample_id FROM sample2tag s2 WHERE s2.tag_id=3604) AND s1.value REGEXP '^[0-9][0-9][0-9][0-9]-[A-Z][A-Z]-[A-Z][A-Z]'" ;
+	dab.ft.exec ( sql ) ;
 }
 
 void UpdateSanger::fixMissingMetadataForTag ( string tag_name , string mlwh_column_name ) {
