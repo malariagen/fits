@@ -9,7 +9,6 @@ UpdateSanger::UpdateSanger () {
 }
 
 void UpdateSanger::updateFromMLWH () {
-	fixMissingMetadata() ; return ; // TESTING
 	updateChangedFlowcellData() ;
 
 	// Update metadata
