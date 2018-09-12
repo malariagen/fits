@@ -9,6 +9,7 @@ UpdateSanger::UpdateSanger () {
 }
 
 void UpdateSanger::updateFromMLWH () {
+	fixMissingMetadata() ; return ; // TESTING
 	updateChangedFlowcellData() ;
 
 	// Update metadata
@@ -21,8 +22,28 @@ void UpdateSanger::fixMissingMetadata () {
 	fixMissingMetadataForTag ( "sequenscape_sample_name" , "sanger_sample_id" ) ; // Missing Sequenscape sample name
 	fixMissingMetadataForTag ( "MLWH taxon ID" , "taxon_id" ) ; // Missing taxon id
 
+	SQLresult r ;
+	SQLmap datamap ;
+	string sql ;
+
+	// Update sequenscape study data from MLWH
+	sql = "SELECT sample_id,`value` FROM sample2tag s1 WHERE s1.tag_id=1362 AND s1.sample_id NOT IN (select DISTINCT s2.sample_id FROM sample2tag s2 WHERE s2.tag_id=3594)" ;
+	query ( dab.ft , r , sql ) ;
+	while ( r.getMap(datamap) ) {
+		db_id fits_sample_id = datamap["sample_id"].asInt() ;
+		SQLresult r2 ;
+		SQLmap datamap2 ;
+		sql = "SELECT study.* FROM study,iseq_flowcell WHERE study.id_lims='SQSCP' AND id_sample_tmp=" + datamap["value"].asString() + " AND iseq_flowcell.id_study_tmp=study.id_study_tmp LIMIT 1" ; // Only one study, one hopes
+		query ( mlwh , r2 , sql ) ;
+		while ( r2.getMap(datamap2) ) {
+			dab.setSampleTag ( fits_sample_id , "MLW study ID" , datamap2["id_study_tmp"] ) ;
+			dab.setSampleTag ( fits_sample_id , "sequenscape study ID" , datamap2["id_study_lims"] ) ;
+			dab.setSampleTag ( fits_sample_id , "sequenscape study name" , datamap2["name"] ) ;
+		}
+	}
+
 	// Add sequenscape study name as Alfresco study where it fits the pattern
-	string sql = "INSERT IGNORE INTO sample2tag (sample_id,tag_id,`value`,`note`) SELECT s1.sample_id,3604,s1.value,'Inferred from sequenscape study name' FROM sample2tag s1 WHERE s1.tag_id=3594 AND s1.sample_id NOT IN (select DISTINCT s2.sample_id FROM sample2tag s2 WHERE s2.tag_id=3604) AND s1.value REGEXP '^[0-9][0-9][0-9][0-9]-[A-Z][A-Z]-[A-Z][A-Z]'" ;
+	sql = "INSERT IGNORE INTO sample2tag (sample_id,tag_id,`value`,`note`) SELECT s1.sample_id,3604,s1.value,'Inferred from sequenscape study name' FROM sample2tag s1 WHERE s1.tag_id=3594 AND s1.sample_id NOT IN (select DISTINCT s2.sample_id FROM sample2tag s2 WHERE s2.tag_id=3604) AND s1.value REGEXP '^[0-9][0-9][0-9][0-9]-[A-Z][A-Z]-[A-Z][A-Z]'" ;
 	dab.ft.exec ( sql ) ;
 }
 
