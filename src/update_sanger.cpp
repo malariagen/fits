@@ -438,6 +438,7 @@ void UpdateSanger::report ( string s ) {
 
 bool UpdateSanger::shouldWeAddThisFile ( string filename , string full_path ) {
 	bool ret = true ;
+	if ( full_path.find("/no_cal/") != std::string::npos ) return false ; // Hard exception
 	for ( auto p = 2 ; p < filename.size() ; p++ ) {
 		if ( filename[p-2]=='#' && filename[p-1]=='0' && (filename[p]=='_'||filename[p]=='.') ) ret = false ; // "#0" file, do not add
 	}
