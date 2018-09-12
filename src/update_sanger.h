@@ -18,6 +18,8 @@ protected:
 	string getBatonCommandForSequenscapeSample ( string sequenscape_sample_id ) ;
 	void addLaneMetrics () ;
 	void addTaxonID () ;
+	void fixMissingMetadata () ;
+	void fixMissingMetadataForTag ( string tag_name , string mlwh_column_name ) ;
 	void updateChangedFlowcellData () ;
 	void ensureMLWHsamplesExistInFITS ( const map <string,string> &mlwh_sample2mlwh_study ) ;
 	void addFilesForSampleFromBaton ( string mlwh_sample_id , vector <SQLmap> *all_flowcells = NULL ) ;

@@ -14,6 +14,43 @@ void UpdateSanger::updateFromMLWH () {
 	// Update metadata
 	addLaneMetrics() ;
 	addTaxonID() ;
+	fixMissingMetadata() ;
+}
+
+void UpdateSanger::fixMissingMetadata () {
+	fixMissingMetadataForTag ( "sequenscape_sample_name" , "sanger_sample_id" ) ; // Missing Sequenscape sample name
+	fixMissingMetadataForTag ( "MLWH taxon ID" , "taxon_id" ) ; // Missing taxon id
+}
+
+void UpdateSanger::fixMissingMetadataForTag ( string tag_name , string mlwh_column_name ) {
+	db_id tag_id = dab.getTagID ( tag_name ) ;
+	SQLresult r ;
+	SQLmap datamap ;
+	string sql ;
+
+	map <db_id,db_id> mlwh_sample2fits_sample ;
+	sql = "select sample_id,`value` FROM sample2tag st1 WHERE st1.tag_id=1362 AND st1.sample_id NOT IN (SELECT st2.sample_id FROM sample2tag st2 WHERE st2.tag_id=" + i2s(tag_id) + ")" ;
+	query ( dab.ft , r , sql ) ;
+	while ( r.getMap(datamap) ) mlwh_sample2fits_sample[datamap["value"].asInt()] = datamap["sample_id"].asInt() ;
+	if ( mlwh_sample2fits_sample.empty() ) return ;
+
+	sql = "SELECT * FROM sample WHERE id_sample_tmp IN (" ;
+	bool first = true ;
+	for ( auto x = mlwh_sample2fits_sample.begin() ; x != mlwh_sample2fits_sample.end() ; x++ ) {
+		if ( first ) first = false ;
+		else sql += "," ;
+		sql += i2s(x->first) ;
+	}
+	sql += ") AND `" + mlwh_column_name + "` IS NOT NULL" ;
+	query ( mlwh , r , sql ) ;
+	while ( r.getMap(datamap) ) {
+		db_id mlwh_id = datamap["id_sample_tmp"].asInt() ;
+		if ( mlwh_sample2fits_sample.find(mlwh_id) == mlwh_sample2fits_sample.end() ) continue ; // Paranoia
+		string sample_name = datamap[mlwh_column_name] ;
+		if ( sample_name.empty() ) continue ;
+		db_id fits_sample_id = mlwh_sample2fits_sample[mlwh_id] ;
+		dab.setSampleTag ( fits_sample_id , tag_name , sample_name ) ;
+	}
 }
 
 void UpdateSanger::updatePivotView ( string table ) {
