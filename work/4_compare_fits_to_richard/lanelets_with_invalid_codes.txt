@@ -1,0 +1,64 @@
+irods_filename	study	study_lims	sample	qc_complete	description	instrument_model	instrument_model	forward_read_length	requested_insert_size_from	ebi_run_acc	lane
+12135_6#66.cram	Test sequencing of high level human contamination.	2876	PD0338-C	2014-02-28 12:53:57	qc complete	HiSeq	HiSeq	100	200.0	ERR490344	12135_6#66
+12135_7#67.cram	Test sequencing of high level human contamination.	2876	QE0196-C	2014-02-28 12:53:57	qc complete	HiSeq	HiSeq	100	200.0	ERR490345	12135_7#67
+12135_7#68.cram	Test sequencing of high level human contamination.	2876	QE0008-C	2014-02-28 12:53:57	qc complete	HiSeq	HiSeq	100	200.0	ERR490346	12135_7#68
+12135_7#69.cram	Test sequencing of high level human contamination.	2876	QE0145-C	2014-02-28 12:53:57	qc complete	HiSeq	HiSeq	100	200.0	ERR490347	12135_7#69
+12135_7#70.cram	Test sequencing of high level human contamination.	2876	QE0022-C	2014-02-28 12:53:57	qc complete	HiSeq	HiSeq	100	200.0	ERR490348	12135_7#70
+12135_7#71.cram	Test sequencing of high level human contamination.	2876	QE0212-C	2014-02-28 12:53:57	qc complete	HiSeq	HiSeq	100	200.0	ERR490349	12135_7#71
+3530_8_nonhuman.bam	AT-rich amplification	1935	PK76-C_200	2009-08-26 00:56:41	qc complete	HK	HK	76	150.0	ERR012749	3530_8_nonhuman
+5408_2_nonhuman.bam	AT-rich amplification	1935	PK0076	2010-11-12 22:37:15	qc complete	HK	HK	76	0.0		5408_2_nonhuman
+5408_5_nonhuman.bam	AT-rich amplification	1935	3D7_150	2010-11-12 22:37:15	qc complete	HK	HK	76	0.0		5408_5_nonhuman
+5535_3_nonhuman.bam	AT-rich amplification	1935	3d7-plt	2010-12-09 10:57:01	qc complete	HK	HK	76	200.0		5535_3_nonhuman
+5562_2_nonhuman.bam	AT-rich amplification	1935	3d7-ph	2010-12-21 18:55:00	qc complete	HK	HK	76	200.0		5562_2_nonhuman
+5598_6_nonhuman.bam	AT-rich amplification	1935	3d7_Dx_5	2010-12-22 07:07:36	qc complete	HK	HK	76	200.0		5598_6_nonhuman
+5598_7_nonhuman.bam	AT-rich amplification	1935	3d7_Dx_10	2010-12-22 07:07:36	qc complete	HK	HK	76	200.0		5598_7_nonhuman
+5701_8_nonhuman#1.bam	AT-rich amplification	1935	PK76-Plt-1	2011-02-02 21:17:28	qc complete	HK	HK	76	100.0		5701_8_nonhuman#1
+5701_8_nonhuman#2.bam	AT-rich amplification	1935	PK76-Kapa-2	2011-02-02 21:17:28	qc complete	HK	HK	76	100.0		5701_8_nonhuman#2
+5701_8_nonhuman#3.bam	AT-rich amplification	1935	PK76-Phus-3	2011-02-02 21:17:28	qc complete	HK	HK	76	100.0		5701_8_nonhuman#3
+5701_8_nonhuman#4.bam	AT-rich amplification	1935	PK76-Dx-4	2011-02-02 21:17:28	qc complete	HK	HK	76	100.0		5701_8_nonhuman#4
+5701_8_nonhuman#5.bam	AT-rich amplification	1935	PK76-plt-notmac-5	2011-02-02 21:17:28	qc complete	HK	HK	76	100.0		5701_8_nonhuman#5
+5701_8_nonhuman#6.bam	AT-rich amplification	1935	Pk76-kap-notmac-6	2011-02-02 21:17:28	qc complete	HK	HK	76	100.0		5701_8_nonhuman#6
+5704_1_nonhuman.bam	AT-rich amplification	1935	Plt-no-tmac	2011-02-12 10:35:37	qc complete	HK	HK	76	100.0		5704_1_nonhuman
+5756_8_nonhuman#11.bam	AT-rich amplification	1935	3d7-FZ-11	2011-02-16 22:40:22	qc complete	HK	HK	76	200.0	ERR043381	5756_8_nonhuman#11
+5756_8_nonhuman#12.bam	AT-rich amplification	1935	3d7-NF-12	2011-02-16 22:40:22	qc complete	HK	HK	76	200.0	ERR043382	5756_8_nonhuman#12
+5928_8_nonhuman#1.bam	AT-rich amplification	1935	Plt-3d7-no-tmac	2011-03-19 21:39:31	qc complete	HK	HK	76	100.0		5928_8_nonhuman#1
+5928_8_nonhuman#2.bam	AT-rich amplification	1935	Accu-3d7-no-tmac	2011-03-19 21:39:31	qc complete	HK	HK	76	100.0	ERR047177	5928_8_nonhuman#2
+5928_8_nonhuman#3.bam	AT-rich amplification	1935	KapR-3d7-no-tmac	2011-03-19 21:39:31	qc complete	HK	HK	76	100.0	ERR047178	5928_8_nonhuman#3
+5928_8_nonhuman#4.bam	AT-rich amplification	1935	KapHifi-3d7-no-tmac	2011-03-19 21:39:31	qc complete	HK	HK	76	100.0	ERR047179	5928_8_nonhuman#4
+5941_1_nonhuman#1.bam	AT-rich amplification	1935	Plt-PK76-no-tmc	2011-03-28 09:32:22	qc complete	HK	HK	76	100.0		5941_1_nonhuman#1
+5941_1_nonhuman#2.bam	AT-rich amplification	1935	Accu-PK76-no-tmc	2011-03-28 09:32:22	qc complete	HK	HK	76	100.0		5941_1_nonhuman#2
+5941_1_nonhuman#3.bam	AT-rich amplification	1935	KapR-PK76-no-tmc	2011-03-28 09:32:22	qc complete	HK	HK	76	100.0		5941_1_nonhuman#3
+5941_1_nonhuman#4.bam	AT-rich amplification	1935	KapHifi-PK76-no-tmc	2011-03-28 09:32:22	qc complete	HK	HK	76	100.0		5941_1_nonhuman#4
+5941_6_nonhuman#1.bam	AT-rich amplification	1935	Plt-PK76-Plus-tmc	2011-03-28 09:32:22	qc complete	HK	HK	76	100.0		5941_6_nonhuman#1
+5941_6_nonhuman#3.bam	AT-rich amplification	1935	KapR-PK76-Plus-tmc	2011-03-28 09:32:22	qc complete	HK	HK	76	100.0		5941_6_nonhuman#3
+5941_6_nonhuman#4.bam	AT-rich amplification	1935	KapHiFi-PK76-Plus-tmc	2011-03-28 09:32:22	qc complete	HK	HK	76	100.0		5941_6_nonhuman#4
+6346_3_nonhuman#1.bam	AT-rich amplification	1935	Phus_3d7	2011-06-15 12:57:52	qc complete	HK	HK	76	100.0	ERR047184	6346_3_nonhuman#1
+6346_3_nonhuman#2.bam	AT-rich amplification	1935	Accu_3d7	2011-06-15 12:57:52	qc complete	HK	HK	76	100.0	ERR047185	6346_3_nonhuman#2
+6346_3_nonhuman#3.bam	AT-rich amplification	1935	KapR_3d7	2011-06-15 12:57:52	qc complete	HK	HK	76	100.0	ERR047186	6346_3_nonhuman#3
+6346_3_nonhuman#4.bam	AT-rich amplification	1935	KapHifi_3d7	2011-06-15 12:57:52	qc complete	HK	HK	76	100.0	ERR047187	6346_3_nonhuman#4
+6346_5_nonhuman#1.bam	AT-rich amplification	1935	Phus_PK76	2011-06-15 12:57:52	qc complete	HK	HK	76	100.0	ERR047188	6346_5_nonhuman#1
+6346_5_nonhuman#2.bam	AT-rich amplification	1935	Accu_PK76	2011-06-15 12:57:52	qc complete	HK	HK	76	100.0	ERR047189	6346_5_nonhuman#2
+6346_5_nonhuman#3.bam	AT-rich amplification	1935	KapR_PK76	2011-06-15 12:57:52	qc complete	HK	HK	76	100.0	ERR047190	6346_5_nonhuman#3
+6346_5_nonhuman#4.bam	AT-rich amplification	1935	KapHifi_PK76	2011-06-15 12:57:52	qc complete	HK	HK	76	100.0	ERR047191	6346_5_nonhuman#4
+6901_8_nonhuman#10.bam	Plasmodium falciparum genome variation 1	578	Tr5E_1	2011-11-01 12:52:25	qc complete	HiSeq	HiSeq	100	200.0	ERR205946	6901_8_nonhuman#10
+6901_8_nonhuman#11.bam	Plasmodium falciparum genome variation 1	578	Tr3E	2011-11-01 12:52:25	qc complete	HiSeq	HiSeq	100	200.0	ERR205947	6901_8_nonhuman#11
+6901_8_nonhuman#2.bam	Plasmodium falciparum genome variation 1	578	Tr5E	2011-11-01 12:52:25	qc complete	HiSeq	HiSeq	100	200.0	ERR205938	6901_8_nonhuman#2
+6901_8_nonhuman#3.bam	Plasmodium falciparum genome variation 1	578	Tr3E_1	2011-11-01 12:52:25	qc complete	HiSeq	HiSeq	100	200.0	ERR205939	6901_8_nonhuman#3
+7560_8#1.bam	AT-rich amplification	1935	90Hs-3D7-plus	2012-03-01 17:33:07	qc complete	HiSeq	HiSeq	75	150.0		7560_8#1
+7560_8#10.bam	AT-rich amplification	1935	PM56-minus	2012-03-01 17:33:07	qc complete	HiSeq	HiSeq	75	150.0		7560_8#10
+7560_8#11.bam	AT-rich amplification	1935	PM65-minus	2012-03-01 17:33:07	qc complete	HiSeq	HiSeq	75	150.0		7560_8#11
+7560_8#12.bam	AT-rich amplification	1935	PM116-minus	2012-03-01 17:33:07	qc complete	HiSeq	HiSeq	75	150.0		7560_8#12
+7560_8#4.bam	AT-rich amplification	1935	PM56-plus	2012-03-01 17:33:07	qc complete	HiSeq	HiSeq	75	150.0		7560_8#4
+7560_8#5.bam	AT-rich amplification	1935	PM65-plus	2012-03-01 17:33:07	qc complete	HiSeq	HiSeq	75	150.0		7560_8#5
+7560_8#6.bam	AT-rich amplification	1935	PM116-plus	2012-03-01 17:33:07	qc complete	HiSeq	HiSeq	75	150.0		7560_8#6
+7560_8#7.bam	AT-rich amplification	1935	90Hs-3D7-minus	2012-03-01 17:33:07	qc complete	HiSeq	HiSeq	75	150.0		7560_8#7
+8002_4#1.bam	AT-rich amplification	1935	90Hs-3D7-Spri-1	2012-06-11 13:52:53	qc complete	HiSeq	HiSeq	75	150.0		8002_4#1
+8002_4#2.bam	AT-rich amplification	1935	90Hs-3D7-Spri-2	2012-06-11 13:52:53	qc complete	HiSeq	HiSeq	75	150.0		8002_4#2
+8002_4#21.bam	AT-rich amplification	1935	PF312-MspJI	2012-06-11 13:52:53	qc complete	HiSeq	HiSeq	75	150.0		8002_4#21
+8002_4#22.bam	AT-rich amplification	1935	PH579-MspJI	2012-06-11 13:52:53	qc complete	HiSeq	HiSeq	75	150.0		8002_4#22
+8002_4#23.bam	AT-rich amplification	1935	PH603-MspJI	2012-06-11 13:52:53	qc complete	HiSeq	HiSeq	75	150.0		8002_4#23
+8002_4#3.bam	AT-rich amplification	1935	90Hs-3D7-Gel-no-Act	2012-06-11 13:52:53	qc complete	HiSeq	HiSeq	75	150.0		8002_4#3
+8002_4#4.bam	AT-rich amplification	1935	3D7-no-dig	2012-06-11 13:52:53	qc complete	HiSeq	HiSeq	75	150.0		8002_4#4
+8002_4#5.bam	AT-rich amplification	1935	90Hs-3D7-gel-plus-Act	2012-06-11 13:52:53	qc complete	HiSeq	HiSeq	75	150.0		8002_4#5
+8002_4#6.bam	AT-rich amplification	1935	PK76-GE-WGA	2012-06-11 13:52:53	qc complete	HiSeq	HiSeq	75	150.0		8002_4#6
+8002_4#7.bam	AT-rich amplification	1935	3D7-MspJ-dig	2012-06-11 13:52:53	qc complete	HiSeq	HiSeq	75	150.0		8002_4#7
