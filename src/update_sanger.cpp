@@ -204,11 +204,9 @@ void UpdateSanger::updateChangedFlowcellData () {
 
 	if ( !last_update_done.empty() ) {
 		sql = "REPLACE INTO kv (kv_key,kv_value) VALUES ('mlwh_flowcell_last_update','" + last_update_done + "')" ;
-//		query ( dab.ft , r , sql ) ;// TODO deactivated
 	}
 
 	// TODO add metadata like sequenscape sample ID to samples with MLWH ID in FITS
-	// TODO write last timestamp back to kv:mlwh_flowcell_last_update
 }
 
 // This will run baton for a specific sequenscape sample ID, and try to add the files plus metadata to FITS. Existing files will be ignored.
@@ -255,7 +253,7 @@ void UpdateSanger::addFilesForSampleFromBaton ( string mlwh_sample_id , vector <
 
 		if ( !shouldWeAddThisFile ( filename , full_path ) ) continue ;
 
-//		if ( dab.doesFileExist ( full_path ) ) continue ; // DEACTIVATE FOR TESTING OR UPDATING
+//		if ( dab.doesFileExist ( full_path ) ) continue ; // DEACTIVATE FOR TESTING OR UPDATING; TODO enable for production
 		db_id file_id = dab.getOrCreateFileID ( full_path , filename , 1 ) ;
 		if ( file_id == 0 ) {
 			cout << "FAILED TO CREATE FILE ENTRY FOR " << full_path << " of MLWH sample " << mlwh_sample_id << endl ;
@@ -453,7 +451,13 @@ string UpdateSanger::getBatonCommandForSequenscapeSample ( string sequenscape_sa
 }
 
 vector <string> UpdateSanger::getOurMLWHstudies() {
-	return queryFirstColumn ( mlwh , "SELECT DISTINCT id_study_tmp FROM study WHERE `faculty_sponsor` like '%Kwiatkowski%'" );
+	vector <string> ret ;
+	ret = queryFirstColumn ( mlwh , "SELECT DISTINCT id_study_tmp FROM study WHERE `faculty_sponsor` like '%Kwiatkowski%'" );
+	ret.push_back ( "2104" ) ; // HARDCODED SEQCAP_WGS_Low_coverage_sequencing_of_the_Woloff_from_Gambia, homo sapiens, Richard Durbin
+
+	std::sort ( ret.begin() , ret.end() ) ;
+	std::unique ( ret.begin() , ret.end() ) ;
+	return ret ;
 }
 
 void UpdateSanger::report ( string s ) {
