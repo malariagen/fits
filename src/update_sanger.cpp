@@ -282,7 +282,7 @@ void UpdateSanger::addFilesForSampleFromBaton ( string mlwh_sample_id , vector <
 			else if ( attribute == "reference" ) dab.setFileTag ( file_id , "CRAM reference" , value , note ) ;
 			else if ( attribute == "id_run" ) dab.setFileTag ( file_id , "sequencing run" , value , note ) ;
 			else if ( attribute == "lane" ) dab.setFileTag ( file_id , "flowcell position" , value , note ) ;
-			else if ( attribute == "ebi_run_acc" ) dab.setFileTag ( file_id , "EBI run accession" , value , note ) ;
+			else if ( attribute == "ebi_run_acc" ) dab.setFileTag ( file_id , "ENA run accession ID" , value , note ) ;
 			else if ( attribute == "sample_common_name" ) {
 				dab.setFileTag ( file_id , "sample_common_name" , value , note ) ;
 				dab.setSampleTag ( fits_sample_id , "sample_common_name" , value , note ) ;
