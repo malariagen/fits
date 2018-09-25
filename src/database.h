@@ -87,4 +87,9 @@ public:
     MultiLimsWarehouseDatabase() : MysqlDatabase ( "mlwh.conf" ) {} ;
 } ;
 
+class SubtrackDatabase : public MysqlDatabase {
+public:
+    SubtrackDatabase() : MysqlDatabase ( "subtrack.conf" ) {} ;
+} ;
+
 #endif

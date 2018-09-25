@@ -15,6 +15,67 @@ void UpdateSanger::updateFromMLWH () {
 	addLaneMetrics() ;
 	addTaxonID() ;
 	fixMissingMetadata() ;
+	updateFromSubtrack() ;
+}
+
+
+
+void UpdateSanger::updateFromSubtrack () {
+	map <string,string> tag2col = {
+		{ "subtrack file name" , "file_name" } ,
+		{ "subtrack submission ID" , "id" } ,
+		{ "ENA submission accession ID" , "ebi_sub_acc" } ,
+		{ "ENA study accession ID" , "ebi_study_acc" } ,
+		{ "ENA experiment accession ID" , "ebi_exp_acc" } ,
+		{ "ENA run accession ID" , "ebi_run_acc" }
+	} ;
+	string note = "Imported from subtrack.submission on " + getCurrentTimestamp() ;
+
+	SubtrackDatabase subtrack ;
+	string sql = "SELECT id,full_path,\
+		(SELECT `value` FROM file2tag WHERE file_id=file.id AND tag_id=3578 LIMIT 1) AS run_id,\
+		(SELECT `value` FROM file2tag WHERE file_id=file.id AND tag_id=3571 LIMIT 1) AS lane,\
+		(SELECT `value` FROM file2tag WHERE file_id=file.id AND tag_id=3569 LIMIT 1) AS tag_id\
+		FROM file \
+		WHERE id NOT IN (SELECT DISTINCT file_id FROM file2tag WHERE tag_id=3607) \
+		AND id IN (SELECT file_id FROM file2tag WHERE tag_id=3576 AND value IN ('bam','cram'))\
+		AND full_path NOT LIKE '%_phix%' AND full_path NOT LIKE '%_human%'\
+		HAVING run_id IS NOT NULL AND lane IS NOT NULL" ; // Using absence of 3607 as a marker
+	SQLresult r ;
+	SQLmap datamap ;
+	query ( dab.ft , r , sql ) ;
+	while ( r.getMap(datamap) ) {
+		string file_id = datamap["id"] ;
+		sql = "SELECT * FROM submission WHERE run=" + datamap["run_id"].asString() + " AND lane=" + datamap["lane"].asString() ;
+		if ( datamap["tag_id"].asString() != "" ) sql += " AND mux=" + datamap["tag_id"].asString() ;
+
+		SQLresult r2 ;
+		SQLmap datamap2 ;
+		query ( subtrack , r2 , sql ) ;
+		if ( !r2.getMap(datamap2) ) continue ;
+		for ( auto t2c = tag2col.begin() ; t2c != tag2col.end() ; t2c++ ) {
+			dab.setFileTag ( file_id , t2c->first , datamap2[t2c->second].asString() , note ) ;
+		}
+		string submission_id = datamap2["id"].asString() ;
+		string ena_sample_acc = datamap2["ebi_sample_acc"].asString() ;
+
+
+		// Sample accession
+		sql = "SELECT sample_id FROM sample2file WHERE file_id=" + file_id ;
+		query ( dab.ft , r2 , sql ) ;
+		while ( r2.getMap(datamap2) ) {
+			string sample_id = datamap2["sample_id"].asString() ;
+			dab.setSampleTag ( file_id , "ENA sample accession ID" , ena_sample_acc , note ) ;
+		}
+
+		// File size
+		sql = "SELECT * FROM files WHERE sub_id=" + submission_id + " LIMIT 1" ;
+		query ( subtrack , r2 , sql ) ;
+		if ( r2.getMap(datamap2) ) {
+			dab.setFileTag ( file_id , "subtrack file size" , datamap2["bytes"].asString() , note ) ;
+		}
+
+	}
 }
 
 void UpdateSanger::fixMissingMetadata () {

@@ -18,6 +18,7 @@ protected:
 	string getBatonCommandForSequenscapeSample ( string sequenscape_sample_id ) ;
 	void addLaneMetrics () ;
 	void addTaxonID () ;
+	void updateFromSubtrack () ;
 	void fixMissingMetadata () ;
 	void fixMissingMetadataForTag ( string tag_name , string mlwh_column_name ) ;
 	void updateChangedFlowcellData () ;

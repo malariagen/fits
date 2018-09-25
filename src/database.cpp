@@ -185,6 +185,7 @@ bool SQLresult::getMap ( SQLmap &map ) {
     if ( row.size() != field_names.size() ) throw "Row/field disparity\n" ;
     map.clear() ;
     for ( uint32_t i = 0 ; i < field_names.size() ; i++ ) map[field_names[i]] = row[i] ;
+    return true ;
 }
 
 void SQLresult::readFieldNames() {
