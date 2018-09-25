@@ -355,6 +355,8 @@ void UpdateSanger::addFilesForSampleFromBaton ( string mlwh_sample_id , vector <
 			else if ( attribute == "id_run" ) dab.setFileTag ( file_id , "sequencing run" , value , note ) ;
 			else if ( attribute == "lane" ) dab.setFileTag ( file_id , "flowcell position" , value , note ) ;
 			else if ( attribute == "ebi_run_acc" ) dab.setFileTag ( file_id , "ENA run accession ID" , value , note ) ;
+			else if ( attribute == "library" ) dab.setFileTag ( file_id , "sequenscape library name" , value , note ) ;
+			else if ( attribute == "library_id" ) dab.setFileTag ( file_id , "MLW legacy library ID" , value , note ) ;
 			else if ( attribute == "sample_common_name" ) {
 				dab.setFileTag ( file_id , "sample_common_name" , value , note ) ;
 				dab.setSampleTag ( fits_sample_id , "sample_common_name" , value , note ) ;
@@ -377,6 +379,8 @@ void UpdateSanger::addFilesForSampleFromBaton ( string mlwh_sample_id , vector <
 				flowcell_found = true ;
 				fc["flowcell_position"] = lane ;
 				for ( auto key:flowcell_keys ) dab.setFileTag ( file_id , key , fc[key] , note ) ;
+				dab.setFileTag ( file_id , "MLW legacy library ID" , fc["legacy_library_id"] , note ) ;
+				dab.setFileTag ( file_id , "sequenscape library lims ID" , fc["id_library_lims"] , note ) ;
 
 				sql = "UPDATE id_iseq_flowcell_tmp_no_file SET missing_file=0 WHERE id=" + fc["id_iseq_flowcell_tmp"].asString() ;
 				dab.ft.exec ( sql ) ;
