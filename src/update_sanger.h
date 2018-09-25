@@ -19,6 +19,7 @@ protected:
 	void addLaneMetrics () ;
 	void addTaxonID () ;
 	void updateFromSubtrack () ;
+	void updateFromSubtrackTables ( string file_id , string sql_submission ) ;
 	void fixMissingMetadata () ;
 	void fixMissingMetadataForTag ( string tag_name , string mlwh_column_name ) ;
 	void updateChangedFlowcellData () ;

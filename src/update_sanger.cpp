@@ -21,17 +21,7 @@ void UpdateSanger::updateFromMLWH () {
 
 
 void UpdateSanger::updateFromSubtrack () {
-	map <string,string> tag2col = {
-		{ "subtrack file name" , "file_name" } ,
-		{ "subtrack submission ID" , "id" } ,
-		{ "ENA submission accession ID" , "ebi_sub_acc" } ,
-		{ "ENA study accession ID" , "ebi_study_acc" } ,
-		{ "ENA experiment accession ID" , "ebi_exp_acc" } ,
-		{ "ENA run accession ID" , "ebi_run_acc" }
-	} ;
-	string note = "Imported from subtrack.submission on " + getCurrentTimestamp() ;
-
-	SubtrackDatabase subtrack ;
+	// Find new ones
 	string sql = "SELECT id,full_path,\
 		(SELECT `value` FROM file2tag WHERE file_id=file.id AND tag_id=3578 LIMIT 1) AS run_id,\
 		(SELECT `value` FROM file2tag WHERE file_id=file.id AND tag_id=3571 LIMIT 1) AS lane,\
@@ -48,33 +38,54 @@ void UpdateSanger::updateFromSubtrack () {
 		string file_id = datamap["id"] ;
 		sql = "SELECT * FROM submission WHERE run=" + datamap["run_id"].asString() + " AND lane=" + datamap["lane"].asString() ;
 		if ( datamap["tag_id"].asString() != "" ) sql += " AND mux=" + datamap["tag_id"].asString() ;
+		updateFromSubtrackTables ( file_id , sql ) ;
+	}
 
-		SQLresult r2 ;
-		SQLmap datamap2 ;
-		query ( subtrack , r2 , sql ) ;
-		if ( !r2.getMap(datamap2) ) continue ;
-		for ( auto t2c = tag2col.begin() ; t2c != tag2col.end() ; t2c++ ) {
-			dab.setFileTag ( file_id , t2c->first , datamap2[t2c->second].asString() , note ) ;
-		}
-		string submission_id = datamap2["id"].asString() ;
-		string ena_sample_acc = datamap2["ebi_sample_acc"].asString() ;
+	// Update old, blank values
+	sql = "SELECT file_id,`value` AS sub_id FROM file2tag ft1 WHERE tag_id=3608 AND NOT EXISTS (SELECT * FROM file2tag ft2 WHERE tag_id=3610 AND ft1.file_id=ft2.file_id)" ;
+	query ( dab.ft , r , sql ) ;
+	while ( r.getMap(datamap) ) {
+		if ( datamap["sub_id"].asString().empty() ) continue ;
+		sql = "SELECT * FROM submission WHERE id=" + datamap["sub_id"].asString() ;
+		updateFromSubtrackTables ( datamap["file_id"] , sql ) ;
+	}
+}
 
+void UpdateSanger::updateFromSubtrackTables ( string file_id , string sql_submission ) {
+	map <string,string> tag2col = {
+		{ "subtrack submission ID" , "id" } ,
+		{ "ENA submission accession ID" , "ebi_sub_acc" } ,
+		{ "ENA study accession ID" , "ebi_study_acc" } ,
+		{ "ENA experiment accession ID" , "ebi_exp_acc" } ,
+		{ "ENA run accession ID" , "ebi_run_acc" }
+	} ;
+	SubtrackDatabase subtrack ;
+	string note = "Imported from subtrack.submission on " + getCurrentTimestamp() ;
+	string sql ;
+	SQLresult r2 ;
+	SQLmap datamap2 ;
+	query ( subtrack , r2 , sql_submission ) ;
+	if ( !r2.getMap(datamap2) ) return ;
+	for ( auto t2c = tag2col.begin() ; t2c != tag2col.end() ; t2c++ ) {
+		if ( !datamap2[t2c->second].asString().empty() ) dab.setFileTag ( file_id , t2c->first , datamap2[t2c->second].asString() , note ) ;
+	}
+	string submission_id = datamap2["id"].asString() ;
+	string ena_sample_acc = datamap2["ebi_sample_acc"].asString() ;
 
-		// Sample accession
-		sql = "SELECT sample_id FROM sample2file WHERE file_id=" + file_id ;
-		query ( dab.ft , r2 , sql ) ;
-		while ( r2.getMap(datamap2) ) {
-			string sample_id = datamap2["sample_id"].asString() ;
-			dab.setSampleTag ( file_id , "ENA sample accession ID" , ena_sample_acc , note ) ;
-		}
+	// Sample accession
+	sql = "SELECT sample_id FROM sample2file WHERE file_id=" + file_id ;
+	query ( dab.ft , r2 , sql ) ;
+	while ( r2.getMap(datamap2) ) {
+		string sample_id = datamap2["sample_id"].asString() ; // WTF do we do with that?
+		if ( !ena_sample_acc.empty() ) dab.setSampleTag ( file_id , "ENA sample accession ID" , ena_sample_acc , note ) ;
+	}
 
-		// File size
-		sql = "SELECT * FROM files WHERE sub_id=" + submission_id + " LIMIT 1" ;
-		query ( subtrack , r2 , sql ) ;
-		if ( r2.getMap(datamap2) ) {
-			dab.setFileTag ( file_id , "subtrack file size" , datamap2["bytes"].asString() , note ) ;
-		}
-
+	// File size
+	sql = "SELECT * FROM files WHERE sub_id=" + submission_id + " LIMIT 1" ;
+	query ( subtrack , r2 , sql ) ;
+	if ( r2.getMap(datamap2) ) {
+		if ( !datamap2["bytes"].asString().empty() ) dab.setFileTag ( file_id , "subtrack file size" , datamap2["bytes"].asString() , note ) ;
+		if ( !datamap2["file_name"].asString().empty() ) dab.setFileTag ( file_id , "subtrack file name" , datamap2["file_name"].asString() , note ) ;
 	}
 }
 
