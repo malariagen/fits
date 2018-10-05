@@ -26,14 +26,14 @@ These annotations carry (almost) all metadata for either.
 ![](https://github.com/wtsi-team112/fits/raw/master/documentation/FITS_database_schema_v1.png)
 
 # Tables
-## `file`
+## file
 The `file` table contains the file name and full path, a `tag` reference for `storage` (currently: Sanger sequencing iRODs only).
 Its id field is the unique identifier (UID) for a file.
 
-## `sample`
+## sample
 The `sample` table consists of just the id field for internal referencing, and an arbitrary name given on creation (currently, like “Sequenscape sample #1648793”).
 
-## `tag`
+## tag
 The `tag` table contains a short list of tags to be used as metadata with samples and files.
 Its main information are the `id` and `name` fields, with some annotation.
 A `type` field indicates the subject area of the tag, but no functionality or technical limitation in derived from that.
@@ -44,7 +44,7 @@ Tags are also used directly (without values) in the `file` table to indicate the
 Tags can be self-documenting via their `note` field.
 Detailed description is therefore not part of this document.
 
-## `file2tag`/`sample2tag`
+## file2tag/sample2tag
 These two tables are identical in structure.
 They contain a `file_id` or `sample_id`, respectively, a tag_id to reference a tag, a `value` field for the value of that `tag` in that `file`/`sample`, and an optional `note` field for human-readable annotation.
 
