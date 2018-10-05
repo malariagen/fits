@@ -28,7 +28,7 @@ These annotations carry (almost) all metadata for either.
 # Tables
 ## file
 The `file` table contains the file name and full path, a `tag` reference for `storage` (currently: Sanger sequencing iRODs only).
-Its id field is the unique identifier (UID) for a file.
+Its `id` field is the unique identifier (UID) for a file.
 
 ## sample
 The `sample` table consists of just the id field for internal referencing, and an arbitrary name given on creation (currently, like “Sequenscape sample #1648793”).

@@ -5,7 +5,7 @@ LIBS=${shell $(MYSQL_CONFIG) --libs}
 INC=${shell $(MYSQL_CONFIG) --cflags}
 FLAGS=-std=c++11
 
-OBJECTS=fits.o database.o condition_parser.o command_list.o database_abstraction_layer.o update_sanger.o tools.o
+OBJECTS=fits.o database.o condition_parser.o command_list.o database_abstraction_layer.o update_sanger.o tools.o sanity_checks.o
 
 all: fits
 

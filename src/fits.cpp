@@ -3,8 +3,7 @@
 #include "command_list.h"
 #include "database_abstraction_layer.h"
 #include "update_sanger.h"
-
-
+#include "sanity_checks.h"
 
 
 //________________________________________________________________________________________________________________________________________________________________________________________________
@@ -36,6 +35,10 @@ int main(int argc, char *argv[]) {
         } else {
             ufs.updateFromMLWH() ;
         }
+
+    } else if ( clp.command == "sanity_checks" ) {
+
+        SanityChecks sc ;
 
     } else {
         cout << "Unknown command " << clp.command << endl ;
