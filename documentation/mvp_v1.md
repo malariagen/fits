@@ -48,10 +48,10 @@ Note that in the future, it is expected that information on Sample IDs, Alfresco
 For an example of a recently created build manifest, see https://github.com/wtsi-team112/Pv4/blob/master/notebooks/rp7/20180525_Pv4_manifest.ipynb
 
 ## Create a build manifest containing all samples from a species
-See (how to build a manifest)[./How_to_build_a_manifest.md].
+See (how to build a manifest)[https://github.com/wtsi-team112/fits/blob/master/documentation//How_to_build_a_manifest.md].
 
 ## Create a build manifest given a set of sequencescape IDs, oxford code/ROMA IDs or Alfresco study codes
-See (how to build a manifest)[./How_to_build_a_manifest.md].
+See (how to build a manifest)[https://github.com/wtsi-team112/fits/blob/master/documentation//How_to_build_a_manifest.md].
 
 ## Determine which samples from a given study have been sequenced
 This is currently considered satisfied for the case of sequencescape study IDs. For more recent samples there should be a 1-to-1 mapping from sequencescape to Alfresco study codes, and therefore this use case can be considered satisfied going forwards.
@@ -116,7 +116,7 @@ Possible with current version:
 ```
 SELECT vw_sample_tag.value,full_path FROM vw_sample_tag,vw_sample_file WHERE tag_id=3585 AND vw_sample_tag.sample_id=vw_sample_file.sample_id AND `value` IN (list_of_sequenscape_IDs);
 ```
-See also _hot to build a manifest_
+See (how to build a manifest)[https://github.com/wtsi-team112/fits/blob/master/documentation//How_to_build_a_manifest.md].
 
 ## Create a build manifest given a set of Oxford codes and/or ROMA IDs
 Possible with current version, similar to above.
