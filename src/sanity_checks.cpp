@@ -30,6 +30,22 @@ SanityChecks::SanityChecks () {
     SQLresult r ;
     SQLmap datamap ;
 
+    /* files without samples; should be 0 */
+    sql = "SELECT count(*) AS cnt FROM file WHERE id NOT IN (SELECT DISTINCT file_id FROM sample2file)" ;
+    r = dab.ft.query ( sql ) ;
+    if ( r.getMap(datamap) ) {
+        cout << "There are " << datamap["cnt"].asString() << " files without samples." << endl << sql << endl << endl ;
+    }
+
+    /* Samples without files; should be 0 */
+    sql = "SELECT count(*) AS cnt FROM sample WHERE id NOT IN (SELECT DISTINCT sample_id FROM sample2file)" ;
+    r = dab.ft.query ( sql ) ;
+    if ( r.getMap(datamap) ) {
+        cout << "There are " << datamap["cnt"].asString() << " samples without files." << endl << sql << endl << endl ;
+    }
+
+
+    // Check indifidual tag constraints
     vector <SQLmap> tags ;
     sql = "SELECT * FROM `tag`" ;
     r = dab.ft.query ( sql ) ;
