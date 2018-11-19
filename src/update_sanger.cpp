@@ -9,6 +9,7 @@ UpdateSanger::UpdateSanger () {
 }
 
 void UpdateSanger::updateFromMLWH () {
+fixMissingMetadata () ; exit(0);
 	updateChangedFlowcellData() ;
 
 	// Update metadata
@@ -18,7 +19,39 @@ void UpdateSanger::updateFromMLWH () {
 	updateFromSubtrack() ;
 }
 
+// Adds file JSON from baton where missing
+void UpdateSanger::updateMissingFileJSON () {
+	string sql = "SELECT sample2file.*,(SELECT full_path FROM file WHERE id=file_id) AS full_path,(SELECT value FROM sample2tag WHERE sample2tag.sample_id=sample2file.sample_id AND tag_id=1362) AS mlwh_sample_id FROM sample2file WHERE file_id IN (SELECT id FROM file WHERE id NOT IN (SELECT DISTINCT file_id FROM file2tag WHERE tag_id=3575))" ;
+	SQLresult r ;
+	SQLmap datamap ;
+	query ( dab.ft , r , sql ) ;
+	while ( r.getMap(datamap) ) {
+		string mlwh_sample_id = datamap["mlwh_sample_id"].asString() ;
+		cout << datamap["sample_id"].asString() << " : " << mlwh_sample_id << endl ;
+		addFilesForSampleFromBaton ( mlwh_sample_id ) ;
+	}
+}
 
+
+void UpdateSanger::fixMissingMetadataFromFileAvus ( string missing_tag_id , string avu_key ) {
+	string sql = "SELECT * FROM file2tag ft1 WHERE tag_id=3575 AND file_id NOT IN (SELECT file_id FROM file2tag WHERE tag_id=" + missing_tag_id + ") AND `value` LIKE '%\"" + avu_key + "\"%'" ;
+	SQLresult r ;
+	SQLmap datamap ;
+	query ( dab.ft , r , sql ) ;
+	while ( r.getMap(datamap) ) {
+		string file_id = datamap["file_id"] ;
+		json j = json::parse ( datamap["value"].asString() ) ;
+
+		string note = "Imported from BATON on " + getCurrentTimestamp() ;
+		for ( auto avu: j["file"]["avus"] ) {
+			string attribute = avu["attribute"].get<std::string>() ;
+			if ( attribute != avu_key ) continue ;
+			string value = avu["value"].get<std::string>() ;
+cout << attribute << " : " << value << endl ;
+			addFileTagFromAvu ( file_id , attribute , value , note ) ;
+		}
+	}
+}
 
 void UpdateSanger::updateFromSubtrack () {
 	// Find new ones
@@ -90,6 +123,8 @@ void UpdateSanger::updateFromSubtrackTables ( string file_id , string sql_submis
 }
 
 void UpdateSanger::fixMissingMetadata () {
+	updateMissingFileJSON() ;
+//	fixMissingMetadataFromFileAvus("3588","alignment_filter") ; // Used to "backfill" from cached JSON iRODs data, usually as one-off
 	fixMissingMetadataForTag ( "sequenscape_sample_name" , "sanger_sample_id" ) ; // Missing Sequenscape sample name
 	fixMissingMetadataForTag ( "MLWH taxon ID" , "taxon_id" ) ; // Missing taxon id
 
@@ -284,7 +319,7 @@ void UpdateSanger::updateChangedFlowcellData () {
 // This will run baton for a specific sequenscape sample ID, and try to add the files plus metadata to FITS. Existing files will be ignored.
 void UpdateSanger::addFilesForSampleFromBaton ( string mlwh_sample_id , vector <SQLmap> *all_flowcells ) {
 	string sql ;
-
+//if(mlwh_sample_id!="3700389") return ; // TESTING
 	sql = "SELECT id_sample_lims FROM sample WHERE id_sample_tmp=" + mlwh_sample_id ;
 	string sequenscape_sample_id = queryFirstColumn ( mlwh , sql ) [0] ;
 
@@ -294,7 +329,7 @@ void UpdateSanger::addFilesForSampleFromBaton ( string mlwh_sample_id , vector <
 //cout << mlwh_sample_id << " : " << fits_sample_id << endl ;
 
 	string cmd = getBatonCommandForSequenscapeSample ( sequenscape_sample_id ) ;
-
+//cout << cmd << endl ; // TESTING
 	string json_text ;
 	try {
 		json_text = exec ( cmd ) ;
@@ -322,73 +357,67 @@ void UpdateSanger::addFilesForSampleFromBaton ( string mlwh_sample_id , vector <
 
 		string filename = entry["data_object"].get<std::string>() ;
 		string full_path = entry["collection"].get<std::string>() + "/" + entry["data_object"].get<std::string>() ;
-
-		if ( !shouldWeAddThisFile ( filename , full_path ) ) continue ;
-
-//		if ( dab.doesFileExist ( full_path ) ) continue ; // DEACTIVATE FOR TESTING OR UPDATING; TODO enable for production
-		db_id file_id = dab.getOrCreateFileID ( full_path , filename , 1 ) ;
-		if ( file_id == 0 ) {
-			cout << "FAILED TO CREATE FILE ENTRY FOR " << full_path << " of MLWH sample " << mlwh_sample_id << endl ;
-			continue ;
-		}
-		dab.setSampleFile ( fits_sample_id , file_id , note ) ;
-
-		dab.setFileTag ( file_id , "iRODS sequencing" ) ;
-		dab.setFileTag ( file_id , "file size" , entry["size"].get<std::string>() ) ;
-
-		string run , lane , tag ;
-
-		for ( auto avu: entry["avus"] ) {
-			string attribute = avu["attribute"].get<std::string>() ;
-			string value = avu["value"].get<std::string>() ;
-
-			if ( attribute == "id_run" ) run = value ;
-			if ( attribute == "lane" ) lane = value ;
-			if ( attribute == "tag_index" ) tag = value ;
-
-			for ( auto key: avu_keys ) {
-				if ( attribute == key ) dab.setFileTag ( file_id , key , value , note ) ;
-			}
-
-			if ( attribute == "type" ) dab.setFileTag ( file_id , "file type" , value , note ) ;
-			else if ( attribute == "reference" ) dab.setFileTag ( file_id , "CRAM reference" , value , note ) ;
-			else if ( attribute == "id_run" ) dab.setFileTag ( file_id , "sequencing run" , value , note ) ;
-			else if ( attribute == "lane" ) dab.setFileTag ( file_id , "flowcell position" , value , note ) ;
-			else if ( attribute == "ebi_run_acc" ) dab.setFileTag ( file_id , "ENA run accession ID" , value , note ) ;
-			else if ( attribute == "library" ) dab.setFileTag ( file_id , "sequenscape library name" , value , note ) ;
-			else if ( attribute == "library_id" ) dab.setFileTag ( file_id , "MLW legacy library ID" , value , note ) ;
-			else if ( attribute == "sample_common_name" ) {
-				dab.setFileTag ( file_id , "sample_common_name" , value , note ) ;
-				dab.setSampleTag ( fits_sample_id , "sample_common_name" , value , note ) ;
-			} else if ( attribute == "sample_supplier_name" ) {
-				dab.setFileTag ( file_id , "sample_supplier_name" , value , note ) ;
-				dab.setSampleTag ( fits_sample_id , "sample_supplier_name" , value , note ) ;
-			}
-
-		}
-
-		SQLmap flowcell ;
+		db_id file_id ;
+		bool file_has_id = false ;
 		bool flowcell_found = false ;
-		if ( all_flowcells and !run.empty() and !lane.empty() ) {
-//			cout << "Checking flowcells for " << run << "/" << lane << "/" << tag << endl ;
-			for ( auto fc: *all_flowcells ) {
-				if ( run != fc["run"].asString() ) continue ;
-				if ( lane != fc["position"].asString() ) continue ;
-				if ( tag != fc["tag_index"].asString() ) continue ;
-				flowcell = fc ;
-				flowcell_found = true ;
-				fc["flowcell_position"] = lane ;
-				for ( auto key:flowcell_keys ) dab.setFileTag ( file_id , key , fc[key] , note ) ;
-				dab.setFileTag ( file_id , "MLW legacy library ID" , fc["legacy_library_id"] , note ) ;
-				dab.setFileTag ( file_id , "sequenscape library lims ID" , fc["id_library_lims"] , note ) ;
+		SQLmap flowcell ;
 
-				sql = "UPDATE id_iseq_flowcell_tmp_no_file SET missing_file=0 WHERE id=" + fc["id_iseq_flowcell_tmp"].asString() ;
-				dab.ft.exec ( sql ) ;
-				break ;
+		if ( shouldWeAddThisFile ( filename , full_path ) ) {
+			file_id = dab.getOrCreateFileID ( full_path , filename , 1 ) ;
+			if ( file_id == 0 ) {
+				cout << "FAILED TO CREATE FILE ENTRY FOR " << full_path << " of MLWH sample " << mlwh_sample_id << endl ;
+				continue ;
+			}
+			file_has_id = true ;
+			dab.setSampleFile ( fits_sample_id , file_id , note ) ;
+
+			dab.setFileTag ( file_id , "iRODS sequencing" ) ;
+			dab.setFileTag ( file_id , "file size" , entry["size"].get<std::string>() ) ;
+
+			string run , lane , tag ;
+
+			for ( auto avu: entry["avus"] ) {
+				string attribute = avu["attribute"].get<std::string>() ;
+				string value = avu["value"].get<std::string>() ;
+
+				if ( attribute == "id_run" ) run = value ;
+				if ( attribute == "lane" ) lane = value ;
+				if ( attribute == "tag_index" ) tag = value ;
+
+				for ( auto key: avu_keys ) {
+					if ( attribute == key ) dab.setFileTag ( file_id , key , value , note ) ;
+				}
+
+				addFileTagFromAvu ( i2s(file_id) , attribute , value , note , i2s(fits_sample_id) ) ;
+
+			}
+
+			if ( all_flowcells and !run.empty() and !lane.empty() ) {
+	//			cout << "Checking flowcells for " << run << "/" << lane << "/" << tag << endl ;
+				for ( auto fc: *all_flowcells ) {
+					if ( run != fc["run"].asString() ) continue ;
+					if ( lane != fc["position"].asString() ) continue ;
+					if ( tag != fc["tag_index"].asString() ) continue ;
+					flowcell = fc ;
+					flowcell_found = true ;
+					fc["flowcell_position"] = lane ;
+					for ( auto key:flowcell_keys ) dab.setFileTag ( file_id , key , fc[key] , note ) ;
+					dab.setFileTag ( file_id , "MLW legacy library ID" , fc["legacy_library_id"] , note ) ;
+					dab.setFileTag ( file_id , "sequenscape library lims ID" , fc["id_library_lims"] , note ) ;
+
+					sql = "UPDATE id_iseq_flowcell_tmp_no_file SET missing_file=0 WHERE id=" + fc["id_iseq_flowcell_tmp"].asString() ;
+					dab.ft.exec ( sql ) ;
+					break ;
+				}
+			}
+		} else {
+			if ( dab.doesFileExist ( full_path , 1 ) ) {
+				file_has_id = true ;
+				file_id = dab.getFileID ( full_path , 1 ) ;
 			}
 		}
 
-		if ( !dab.fileHasTag ( file_id , "iRODs JSON") ) {
+		if ( file_has_id && !dab.fileHasTag ( file_id , "iRODs JSON") ) {
 			string json_info = "{\"file\":"+entry.dump() ;
 			if ( flowcell_found ) {
 				json run_json ;
@@ -396,9 +425,34 @@ void UpdateSanger::addFilesForSampleFromBaton ( string mlwh_sample_id , vector <
 				json_info += ",\"run\":"+run_json.dump() ;
 			}
 			json_info += "}" ;
-			dab.setFileTag ( file_id , "iRODs JSON" , json_info ) ;
+			dab.setFileTag ( file_id , "iRODs JSON" , json_info , note ) ;
 		}
 
+	}
+}
+
+void UpdateSanger::addFileTagFromAvu ( string file_id , string attribute , string value , string note , string fits_sample_id ) {
+	if ( attribute == "type" ) dab.setFileTag ( file_id , "file type" , value , note ) ;
+	else if ( attribute == "reference" ) dab.setFileTag ( file_id , "CRAM reference" , value , note ) ;
+	else if ( attribute == "id_run" ) dab.setFileTag ( file_id , "sequencing run" , value , note ) ;
+	else if ( attribute == "lane" ) dab.setFileTag ( file_id , "flowcell position" , value , note ) ;
+	else if ( attribute == "ebi_run_acc" ) dab.setFileTag ( file_id , "ENA run accession ID" , value , note ) ;
+	else if ( attribute == "library" ) dab.setFileTag ( file_id , "sequenscape library name" , value , note ) ;
+	else if ( attribute == "alignment_filter" ) dab.setFileTag ( file_id , "alignment filter" , value , note ) ;
+	else if ( attribute == "library_id" ) dab.setFileTag ( file_id , "MLW legacy library ID" , value , note ) ;
+
+	else if ( attribute == "sample_common_name" || attribute == "sample_supplier_name" ) {
+		dab.setFileTag ( file_id , attribute , value , note ) ;
+		dab.setSampleTag ( fits_sample_id , attribute , value , note ) ;
+
+		if ( fits_sample_id.empty() ) {
+			auto samples = dab.getSamplesForFile ( file_id ) ;
+			for ( auto fsid : samples ) {
+				dab.setSampleTag ( fsid , attribute , value , note ) ;
+			}
+		} else {
+			dab.setSampleTag ( fits_sample_id , attribute , value , note ) ;
+		}
 	}
 }
 

@@ -96,6 +96,19 @@ string DatabaseAbstractionLayer::getMainID4table ( const string &table ) {
     return (table=="file2tag")?"file_id":"sample_id" ;
 }
 
+vector <string> DatabaseAbstractionLayer::getSamplesForFile ( string file_id ) {
+    vector <string> ret ;
+    string sql = "SELECT sample_id FROM sample2file WHERE file_id=" + file_id ;
+    SQLresult r ;
+    SQLmap datamap ;
+    r = ft.query ( sql ) ;
+    while ( r.getMap(datamap) ) {
+        string sample_id = datamap["sample_id"].asString() ;
+        ret.push_back ( sample_id ) ;
+    }
+    return ret ;
+}
+
 db_id DatabaseAbstractionLayer::doGetFileID ( string full_path , string filename , db_id storage , bool create_if_missing ) {
     string sql = "SELECT * FROM file WHERE `storage`=" + i2s(storage) + " AND `full_path`=" + ft.quote(full_path) + " LIMIT 1" ;
     SQLresult r ;

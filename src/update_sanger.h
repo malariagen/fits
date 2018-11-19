@@ -22,6 +22,9 @@ protected:
 	void updateFromSubtrackTables ( string file_id , string sql_submission ) ;
 	void fixMissingMetadata () ;
 	void fixMissingMetadataForTag ( string tag_name , string mlwh_column_name ) ;
+	void fixMissingMetadataFromFileAvus ( string missing_tag_id , string avu_key ) ;
+	void addFileTagFromAvu ( string file_id , string attribute , string value , string note , string fits_sample_id = "" ) ;
+	void updateMissingFileJSON () ;
 	void updateChangedFlowcellData () ;
 	void ensureMLWHsamplesExistInFITS ( const map <string,string> &mlwh_sample2mlwh_study ) ;
 	void addFilesForSampleFromBaton ( string mlwh_sample_id , vector <SQLmap> *all_flowcells = NULL ) ;

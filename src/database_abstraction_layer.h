@@ -32,6 +32,7 @@ public:
     bool doesFileExist ( string full_path , db_id storage = 1 ) { return (getFileID(full_path,storage)) != 0 ; }
     db_id getFileID ( string full_path , db_id storage = 1 ) { return doGetFileID ( full_path , "" , storage , false ) ; }
     db_id getOrCreateFileID ( string full_path , string filename , db_id storage = 1 ) { return doGetFileID ( full_path , filename , storage , true ) ; }
+    vector <string> getSamplesForFile ( string file_id ) ;
 
     FileTrackingDatabase ft ;
 
