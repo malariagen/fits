@@ -9,7 +9,6 @@ UpdateSanger::UpdateSanger () {
 }
 
 void UpdateSanger::updateFromMLWH () {
-fixMissingMetadata () ; exit(0);
 	updateChangedFlowcellData() ;
 
 	// Update metadata
@@ -109,8 +108,8 @@ void UpdateSanger::updateFromSubtrackTables ( string file_id , string sql_submis
 	sql = "SELECT sample_id FROM sample2file WHERE file_id=" + file_id ;
 	query ( dab.ft , r2 , sql ) ;
 	while ( r2.getMap(datamap2) ) {
-		string sample_id = datamap2["sample_id"].asString() ; // WTF do we do with that?
-		if ( !ena_sample_acc.empty() ) dab.setSampleTag ( file_id , "ENA sample accession ID" , ena_sample_acc , note ) ;
+		string sample_id = datamap2["sample_id"].asString() ;
+		if ( !ena_sample_acc.empty() ) dab.setSampleTag ( sample_id , "ENA sample accession ID" , ena_sample_acc , note ) ;
 	}
 
 	// File size
@@ -211,7 +210,7 @@ void UpdateSanger::updatePivotView ( string table ) {
 	sql = "CREATE OR REPLACE VIEW `"+view+"` AS SELECT "+table+".id AS fits_"+table+"_id," ;
 	if ( table == "file" ) sql += "file.full_path AS full_path," ;
 	sql += implode(parts,false) + " \nFROM " + table ;
-cout << sql << endl ;
+//cout << sql << endl ;
 	dab.ft.exec ( sql ) ;
 }
 
