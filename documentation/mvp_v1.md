@@ -32,6 +32,8 @@ The MVP will _not necessarily_ store mappings from files to samples for
 * samples not sequenced at the Sanger
 
 ## Use cases
+(Tracking of use cases)[https://github.com/malariagen/fits/labels/use%20case].
+
 The section describes a set of use cases that must be satisfied for the MVP to be considered complete, together with a brief description of their status in the current version of the file tracking system at the time of writing. The appendix gives details of queries related to some of these use cases that can currently be performed in FITS at the time of writing.
 
 In the following, a build manifest is considered to be a file with one line per file, and to contain at the minimum:
@@ -49,116 +51,66 @@ Note that in the future, it is expected that information on Sample IDs, Alfresco
 For an example of a recently created build manifest, see https://github.com/wtsi-team112/Pv4/blob/master/notebooks/rp7/20180525_Pv4_manifest.ipynb
 
 ### Create a build manifest containing all samples from a species
-See (how to build a manifest)[https://github.com/wtsi-team112/fits/blob/master/documentation//How_to_build_a_manifest.md].
+See (issue)[https://github.com/malariagen/fits/issues/25].
 
 ### Create a build manifest given a set of sequencescape IDs, oxford code/ROMA IDs or Alfresco study codes
-See (how to build a manifest)[https://github.com/wtsi-team112/fits/blob/master/documentation//How_to_build_a_manifest.md].
+See (issue)[https://github.com/malariagen/fits/issues/26].
 
 ### Determine which samples from a given study have been sequenced
-This is currently considered satisfied for the case of sequencescape study IDs. For more recent samples there should be a 1-to-1 mapping from sequencescape to Alfresco study codes, and therefore this use case can be considered satisfied going forwards.
+See (issue)[https://github.com/malariagen/fits/issues/28].
 
 ### Determine how many samples have been sequenced, broken down by species
-This is currently considered unsatisfied because taxon mappings from Solaris are not included
-
+See (issue)[https://github.com/malariagen/fits/issues/29].
 
 ### Populate FITS with mappings from Solaris
 Done.
 
 ### Manually alter FITS mappings
-The key mappings that need to be captured are:
-- File-to-sample
-- Sample-to-taxon
-- Sample-to-alfresco_study_code
-The changes will need to be done in such a way that data can be overwritten or removed by later updates from mlwh/iRODS or elsewhere.
+See (issue)[https://github.com/malariagen/fits/issues/32].
 
 ### Update the file tracking database with the latest from Multi-LIMS warehouse/baton (iRODs)
-Could the way this is currently done with ./fits update_sanger?overwrite data from Solaris or manual edits? 
-: No.
+See (issue)[https://github.com/malariagen/fits/issues/31].
 
 ## Other documents
-* Database description. Note that at the time of writing this requires the changes suggested by Richard in an email sent 28/06/2018 18:13
-* Command line utility description. These still needs to be written.
-* Process description for automatic and manual updating. This still needs to be written.
+* (Database description)[https://github.com/wtsi-team112/fits/blob/master/documentation/database_design_v1.md]
+* (Command line utility description)[https://github.com/wtsi-team112/fits/blob/master/documentation/fits_command_line_tool.md]
+* (Process description)[https://github.com/wtsi-team112/fits/blob/master/documentation/processes.md]
 
 ## Relationship to SIMS
 For the moment, FITS and SIMS are developed separately. FITS will eventually pull information from SIMS via API, but there is no perceived need for information to flow in the other direction. FITS can match samples and files to SIMS UUIDs via high-level (e.g. ROMA/Oxford) or low-level (e.g. Sequenscape) IDs.
 
 ## Future plans
 The following is a list of things that are considered to be out of scope for the MVP.
+(Tracked as "enhancement")[https://github.com/malariagen/fits/labels/enhancement]
 
 ### Sequencing not done at WSI
 FITS can store any file, given a unique path and a storage “engine”. Currently, the only engine supported is Sanger Sequencing iRODs, but more can be added without changing the database schema. Processes to import and update such data will have to be developed.
 
 The first use case here is likely to be storing ENA run accessions.
 
+(Issue)[https://github.com/malariagen/fits/issues/33]
+
 ### Expanding the scope to include amplicon sequencing data
 FITS is agnostic to file types. Storage engines such as “Team 112 iRODs” or “Sanger NFS” can be added. Processes to import and update such data will have to be developed.
+(Issue)[https://github.com/malariagen/fits/issues/34]
 
 ### Expanding the scope to include human data
 FITS is agnostic to species, however, storing of data about human samples might influence the storage location (US cloud?).
+(Issue)[https://github.com/malariagen/fits/issues/35]
 
 ### Expanding the scope to include pipeline outputs, e.g. release files
 FITS is agnostic to file types.  Processes to import and update such data will have to be developed.
+(Issue)[https://github.com/malariagen/fits/issues/36]
 
-### Command line tool
+### Command line query tool
 A command line tool exists. It can be used to update FITS from the  Multi-LIMS warehouse database. A query engine to ease generation of manifest files without compromising generic queries is under development.
+(Issue)[https://github.com/malariagen/fits/issues/37]
 
 ### Web front end
 A web frontend is not planned at this time, however, one could be developed rather easily.
+(Issue)[https://github.com/malariagen/fits/issues/38]
 
 ### Moving the system to a public cloud
 The FITS database currently resides at Sanger. For better interoperability with Oxford and/or cloud locations, a move to a cloud-based database system is planned once the MVP has stabilized. A database-as-a-service, rather than a generic server running a MySQL client, would be preferred, for ease of maintenance, backups, availability etc.
 Storage of human sample data might complicate finding an adequate cloud location.
-
-## Appendix - current status of use cases
-### Create a build manifest given a set of sequencescape IDs
-Possible with current version:
-```
-SELECT vw_sample_tag.value,full_path FROM vw_sample_tag,vw_sample_file WHERE tag_id=3585 AND vw_sample_tag.sample_id=vw_sample_file.sample_id AND `value` IN (list_of_sequenscape_IDs);
-```
-See (how to build a manifest)[https://github.com/wtsi-team112/fits/blob/master/documentation//How_to_build_a_manifest.md].
-
-### Create a build manifest given a set of Oxford codes and/or ROMA IDs
-Possible with current version, similar to above.
-
-### Create a build manifest given a set of Alfresco study codes
-The current version does not track Alfresco study codes. These can be imported, though a sample tracking system might be a more appropriate place for this information.
-
-### Create a build manifest containing all samples from a species
-Possible with current version; for “sample” meaning “Multi-LIMS warehouse sample ID”, and species defined as Sequenscape taxon ID for “Plasmodium falciparum”:
-```
-SELECT DISTINCT sample_id,(SELECT group_concat(DISTINCT `value`) FROM vw_sample_tag st2 WHERE tag_id IN (3589,3586) AND st1.sample_id=st2.sample_id) AS sample_name FROM vw_sample_tag st1 WHERE tag_id=3600 AND `value`='5833';
-```
-
-### Determine which samples from a given study have been sequenced
-Possible with current version; for “sample” meaning “Multi-LIMS warehouse sample ID”:
-```
-SELECT `value` AS sequenscape_study_id,count(*) AS cnt FROM vw_sample_tag WHERE tag_id=3593 GROUP BY `value` ORDER BY cnt DESC;
-```
-
-### Determine how many samples have been sequenced, broken down by species
-Possible with current version; for “sample” meaning “Multi-LIMS warehouse sample ID”:
-```
-SELECT `value`,count(*) AS cnt,(SELECT taxon_name FROM sequenscape_taxa WHERE taxon_id=`value`) AS name FROM vw_sample_tag WHERE tag_id=3600 GROUP BY `value` ORDER BY cnt DESC;
-```
-
-### Create a detailed BAM/CRAM manifest file with metadata, based on species common names
-Possible with current version; example for Plasmodium vivax V4 (this included a lot of filtering of unwanted files/samples):
-```
-SELECT file.id,file.full_path,
-(SELECT group_concat(value) FROM vw_sample_tag,vw_sample_file WHERE file.id=file_id AND vw_sample_file.sample_id=vw_sample_tag.sample_id AND tag_id=3561) AS ox_code,
-(SELECT group_concat(value) FROM vw_file_tag WHERE file.id=file_id AND tag_id=3591) AS common_name,
-(SELECT group_concat(value) FROM vw_sample_tag,vw_sample_file WHERE file.id=file_id AND vw_sample_file.sample_id=vw_sample_tag.sample_id AND tag_id=3600) AS taxon_code
-FROM file
-WHERE storage=1
-AND file.id IN (SELECT file_id FROM vw_file_tag WHERE tag_id=3591 AND value in ('Plasmodium vivax','vivax','P.vivax','Plasmodium Vvax','P. Vivax')) /*SPECIES NAMES*/
-AND full_path NOT LIKE "%_human%" AND full_path NOT LIKE "%_phix%" /*NOT HUMAN OR PHIX*/
-AND file.id NOT IN (SELECT parent FROM file_relation WHERE relation=3595) /*NOT IDENTICAL TO OTHER FILE*/
-AND EXISTS (SELECT * FROM vw_file_tag WHERE file.id=vw_file_tag.file_id AND tag_id=3576 AND value IN ('bam','cram')) /*FILE TYPE*/
-AND EXISTS (SELECT * FROM vw_file_tag WHERE file.id=vw_file_tag.file_id AND tag_id=3581 AND value=1) /*MANUAL QC*/
-AND NOT EXISTS (SELECT * FROM vw_file_tag WHERE file.id=vw_file_tag.file_id AND tag_id=3582 AND value=1) /*NO R&D*/
-```
-
-### Update the file tracking database with the latest from Multi-LIMS warehouse/baton (iRODs)
-A command-line interface software exists. The command to perform the above operation on Sanger systems is:
-./fits update_sanger
+(Issue)[https://github.com/malariagen/fits/issues/39]
