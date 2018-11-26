@@ -1,5 +1,4 @@
 # File tracking system minimal viable product scope
-V1.1 by Magnus Manske and Richard Pearson, 2018-07-18
 
 ## Introduction
 This document describes the scope of the minimal viable product (MVP) for a new file tracking system (preliminarily designated FITS). The problem that FITS is intended to solve is described in the next section. The scope of the MVP is described in the following section. Following this, some key use cases for FITS are described, including an indication of whether these use cases will be catered for by the MVP. This document concludes with pointers to other relevant documents, relationship to the separate sample information management system (SIMS) project, and future plans.
