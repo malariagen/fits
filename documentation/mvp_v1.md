@@ -48,7 +48,7 @@ In the following, a build manifest is considered to be a file with one line per 
 
 Note that in the future, it is expected that information on Sample IDs, Alfresco study codes and taxon IDs will come from SIMS, but until SIMS is operational, this information will have to come from FITS, otherwise it will not be possible to use FITS for creating build manifests. The definitive source for file-to-sample, sample-to-study and sample-to-taxon mappings should be considered to be Solaris for samples contained in Solaris, or mlwh/iRODS for samples that are not. Note that some older files are included in Solaris but not in mlwh.
 
-For an example of a recently created build manifest, see https://github.com/wtsi-team112/Pv4/blob/master/notebooks/rp7/20180525_Pv4_manifest.ipynb
+For an example of a recently created build manifest, see https://github.com/malariagen/Pv4/blob/master/notebooks/rp7/20180525_Pv4_manifest.ipynb
 
 ### Create a build manifest containing all samples from a species
 See (issue)[https://github.com/malariagen/fits/issues/25].
@@ -72,9 +72,9 @@ See (issue)[https://github.com/malariagen/fits/issues/32].
 See (issue)[https://github.com/malariagen/fits/issues/31].
 
 ## Other documents
-* (Database description)[https://github.com/wtsi-team112/fits/blob/master/documentation/database_design_v1.md]
-* (Command line utility description)[https://github.com/wtsi-team112/fits/blob/master/documentation/fits_command_line_tool.md]
-* (Process description)[https://github.com/wtsi-team112/fits/blob/master/documentation/processes.md]
+* (Database description)[https://github.com/malariagen/fits/blob/master/documentation/database_design_v1.md]
+* (Command line utility description)[https://github.com/malariagen/fits/blob/master/documentation/fits_command_line_tool.md]
+* (Process description)[https://github.com/malariagen/fits/blob/master/documentation/processes.md]
 
 ## Relationship to SIMS
 For the moment, FITS and SIMS are developed separately. FITS will eventually pull information from SIMS via API, but there is no perceived need for information to flow in the other direction. FITS can match samples and files to SIMS UUIDs via high-level (e.g. ROMA/Oxford) or low-level (e.g. Sequenscape) IDs.
