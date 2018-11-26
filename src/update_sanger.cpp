@@ -18,6 +18,27 @@ void UpdateSanger::updateFromMLWH () {
 	updateFromSubtrack() ;
 }
 
+// For samples with MLWH sample ID but no Sequenscape sample ID, import the latter from MLWH
+void UpdateSanger::updateSequenscapeSampleIDfromMLWHsampleID () {
+	string note = "Imported from mlwh.sample on " + getCurrentTimestamp() ;
+	string sql = "SELECT sample_id,value AS mlwh_sample_id FROM sample2tag s1 WHERE tag_id=1362 AND s1.sample_id NOT IN (SELECT sample_id FROM sample2tag WHERE tag_id=3585)" ;
+	SQLresult r ;
+	SQLmap datamap ;
+	query ( dab.ft , r , sql ) ;
+	while ( r.getMap(datamap) ) {
+		string fits_sample_id = datamap["sample_id"].asString() ;
+		string mlwh_sample_id = datamap["mlwh_sample_id"].asString() ;
+		sql = "SELECT * FROM sample WHERE id_sample_tmp=" + mlwh_sample_id + " AND id_lims='SQSCP' AND id_sample_lims!='' AND id_sample_lims IS NOT NULL" ;
+		SQLresult r2 ;
+		SQLmap datamap2 ;
+		query ( mlwh , r2 , sql ) ;
+		while ( r2.getMap(datamap2) ) {
+			string sequenscape_sample_id = datamap2["id_sample_lims"].asString() ;
+			dab.setSampleTag ( fits_sample_id , "sequenscape LIMS ID" , sequenscape_sample_id , note ) ;
+		}
+	}
+}
+
 // Adds file JSON from baton where missing
 void UpdateSanger::updateMissingFileJSON () {
 	string sql = "SELECT sample2file.*,(SELECT full_path FROM file WHERE id=file_id) AS full_path,(SELECT value FROM sample2tag WHERE sample2tag.sample_id=sample2file.sample_id AND tag_id=1362) AS mlwh_sample_id FROM sample2file WHERE file_id IN (SELECT id FROM file WHERE id NOT IN (SELECT DISTINCT file_id FROM file2tag WHERE tag_id=3575))" ;
@@ -87,6 +108,7 @@ void UpdateSanger::updateFromSubtrackTables ( string file_id , string sql_submis
 	map <string,string> tag2col = {
 		{ "subtrack submission ID" , "id" } ,
 		{ "ENA submission accession ID" , "ebi_sub_acc" } ,
+//		{ "ENA sample accession ID" , "ebi_sample_acc" } ,
 		{ "ENA study accession ID" , "ebi_study_acc" } ,
 		{ "ENA experiment accession ID" , "ebi_exp_acc" } ,
 		{ "ENA run accession ID" , "ebi_run_acc" }
@@ -122,6 +144,7 @@ void UpdateSanger::updateFromSubtrackTables ( string file_id , string sql_submis
 }
 
 void UpdateSanger::fixMissingMetadata () {
+	updateSequenscapeSampleIDfromMLWHsampleID() ;
 	updateMissingFileJSON() ;
 //	fixMissingMetadataFromFileAvus("3588","alignment_filter") ; // Used to "backfill" from cached JSON iRODs data, usually as one-off
 	fixMissingMetadataForTag ( "sequenscape_sample_name" , "sanger_sample_id" ) ; // Missing Sequenscape sample name
