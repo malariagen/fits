@@ -2,7 +2,13 @@
 This document describes how to build a manifest file from FITS.
 It uses the database directly.
 Typically, the resulting manifest file will consist of one file per row, with file name, sample name, and other metadata in tab-separated columns.
+Manifests can be build based on various parameters, e.g. from a given set of samples, all samples with a specific taxon, samples in a given list of studies wtc.
+Such a manifest can be used as input for a data build, e.g. with vr-pipe.
+
 This tutorial assumes a basic knowledge of MySQL syntax.
+However, future plans include a command-line query tool that would make it easier for users to create manifest files.
+See (this issue)[https://github.com/malariagen/fits/issues/37] and the (MPV V1)[https://github.com/wtsi-team112/fits/blob/master/documentation/mvp_v1.md] document.
+
 
 ## Specify what you want, then filter
 The general strategy is to specify a _superset_ of the data you want (to make sure you get all of it), then filter out the parts you don't want.
