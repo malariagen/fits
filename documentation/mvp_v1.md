@@ -32,7 +32,7 @@ The MVP will _not necessarily_ store mappings from files to samples for
 * samples not sequenced at the Sanger
 
 ## Use cases
-(Tracking of use cases)[https://github.com/malariagen/fits/labels/use%20case].
+[Tracking of use cases](https://github.com/malariagen/fits/labels/use%20case).
 
 The section describes a set of use cases that must be satisfied for the MVP to be considered complete, together with a brief description of their status in the current version of the file tracking system at the time of writing. The appendix gives details of queries related to some of these use cases that can currently be performed in FITS at the time of writing.
 
@@ -51,66 +51,66 @@ Note that in the future, it is expected that information on Sample IDs, Alfresco
 For an example of a recently created build manifest, see https://github.com/malariagen/Pv4/blob/master/notebooks/rp7/20180525_Pv4_manifest.ipynb
 
 ### Create a build manifest containing all samples from a species
-See (issue)[https://github.com/malariagen/fits/issues/25].
+See [issue](https://github.com/malariagen/fits/issues/25).
 
 ### Create a build manifest given a set of sequencescape IDs, oxford code/ROMA IDs or Alfresco study codes
-See (issue)[https://github.com/malariagen/fits/issues/26].
+See [issue](https://github.com/malariagen/fits/issues/26).
 
 ### Determine which samples from a given study have been sequenced
-See (issue)[https://github.com/malariagen/fits/issues/28].
+See [issue](https://github.com/malariagen/fits/issues/28).
 
 ### Determine how many samples have been sequenced, broken down by species
-See (issue)[https://github.com/malariagen/fits/issues/29].
+See [issue](https://github.com/malariagen/fits/issues/29).
 
 ### Populate FITS with mappings from Solaris
 Done.
 
 ### Manually alter FITS mappings
-See (issue)[https://github.com/malariagen/fits/issues/32].
+See [issue](https://github.com/malariagen/fits/issues/32).
 
 ### Update the file tracking database with the latest from Multi-LIMS warehouse/baton (iRODs)
-See (issue)[https://github.com/malariagen/fits/issues/31].
+See [issue](https://github.com/malariagen/fits/issues/31).
 
 ## Other documents
-* (Database description)[https://github.com/malariagen/fits/blob/master/documentation/database_design_v1.md]
-* (Command line utility description)[https://github.com/malariagen/fits/blob/master/documentation/fits_command_line_tool.md]
-* (Process description)[https://github.com/malariagen/fits/blob/master/documentation/processes.md]
+* [Database description](https://github.com/malariagen/fits/blob/master/documentation/database_design_v1.md)
+* [Command line utility description](https://github.com/malariagen/fits/blob/master/documentation/fits_command_line_tool.md)
+* [Process description](https://github.com/malariagen/fits/blob/master/documentation/processes.md)
 
 ## Relationship to SIMS
 For the moment, FITS and SIMS are developed separately. FITS will eventually pull information from SIMS via API, but there is no perceived need for information to flow in the other direction. FITS can match samples and files to SIMS UUIDs via high-level (e.g. ROMA/Oxford) or low-level (e.g. Sequenscape) IDs.
 
 ## Future plans
 The following is a list of things that are considered to be out of scope for the MVP.
-(Tracked as "enhancement")[https://github.com/malariagen/fits/labels/enhancement]
+[Tracked as "enhancement"](https://github.com/malariagen/fits/labels/enhancement)
 
 ### Sequencing not done at WSI
 FITS can store any file, given a unique path and a storage “engine”. Currently, the only engine supported is Sanger Sequencing iRODs, but more can be added without changing the database schema. Processes to import and update such data will have to be developed.
 
 The first use case here is likely to be storing ENA run accessions.
 
-(Issue)[https://github.com/malariagen/fits/issues/33]
+[Issue](https://github.com/malariagen/fits/issues/33)
 
 ### Expanding the scope to include amplicon sequencing data
 FITS is agnostic to file types. Storage engines such as “Team 112 iRODs” or “Sanger NFS” can be added. Processes to import and update such data will have to be developed.
-(Issue)[https://github.com/malariagen/fits/issues/34]
+[Issue](https://github.com/malariagen/fits/issues/34)
 
 ### Expanding the scope to include human data
 FITS is agnostic to species, however, storing of data about human samples might influence the storage location (US cloud?).
-(Issue)[https://github.com/malariagen/fits/issues/35]
+[Issue](https://github.com/malariagen/fits/issues/35)
 
 ### Expanding the scope to include pipeline outputs, e.g. release files
 FITS is agnostic to file types.  Processes to import and update such data will have to be developed.
-(Issue)[https://github.com/malariagen/fits/issues/36]
+[Issue](https://github.com/malariagen/fits/issues/36)
 
 ### Command line query tool
 A command line tool exists. It can be used to update FITS from the  Multi-LIMS warehouse database. A query engine to ease generation of manifest files without compromising generic queries is under development.
-(Issue)[https://github.com/malariagen/fits/issues/37]
+[Issue](https://github.com/malariagen/fits/issues/37)
 
 ### Web front end
 A web frontend is not planned at this time, however, one could be developed rather easily.
-(Issue)[https://github.com/malariagen/fits/issues/38]
+[Issue](https://github.com/malariagen/fits/issues/38)
 
 ### Moving the system to a public cloud
 The FITS database currently resides at Sanger. For better interoperability with Oxford and/or cloud locations, a move to a cloud-based database system is planned once the MVP has stabilized. A database-as-a-service, rather than a generic server running a MySQL client, would be preferred, for ease of maintenance, backups, availability etc.
 Storage of human sample data might complicate finding an adequate cloud location.
-(Issue)[https://github.com/malariagen/fits/issues/39]
+[Issue](https://github.com/malariagen/fits/issues/39)

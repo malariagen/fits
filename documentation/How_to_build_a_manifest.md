@@ -7,7 +7,7 @@ Such a manifest can be used as input for a data build, e.g. with vr-pipe.
 
 This tutorial assumes a basic knowledge of MySQL syntax.
 However, future plans include a command-line query tool that would make it easier for users to create manifest files.
-See (this issue)[https://github.com/malariagen/fits/issues/37] and the (MPV V1)[https://github.com/wtsi-team112/fits/blob/master/documentation/mvp_v1.md] document.
+See [this issue](https://github.com/malariagen/fits/issues/37) and the [MPV V1](https://github.com/wtsi-team112/fits/blob/master/documentation/mvp_v1.md) document.
 
 
 ## Specify what you want, then filter
