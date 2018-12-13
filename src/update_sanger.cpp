@@ -9,6 +9,7 @@ UpdateSanger::UpdateSanger () {
 }
 
 void UpdateSanger::updateFromMLWH () {
+//updateFromSubtrack();exit(0);
 	updateChangedFlowcellData() ;
 
 	// Update metadata
@@ -86,6 +87,7 @@ void UpdateSanger::updateFromSubtrack () {
 		HAVING run_id IS NOT NULL AND lane IS NOT NULL" ; // Using absence of 3607 as a marker
 	SQLresult r ;
 	SQLmap datamap ;
+
 	query ( dab.ft , r , sql ) ;
 	while ( r.getMap(datamap) ) {
 		string file_id = datamap["id"] ;
@@ -102,6 +104,20 @@ void UpdateSanger::updateFromSubtrack () {
 		sql = "SELECT * FROM submission WHERE id=" + datamap["sub_id"].asString() ;
 		updateFromSubtrackTables ( datamap["file_id"] , sql ) ;
 	}
+
+/*
+// TESTING
+	// Update sample accessions
+	sql = "SELECT DISTINCT `value` AS sequenscape_sample_id,file_id FROM sample2tag s1,sample2file f1 WHERE s1.sample_id=f1.sample_id AND tag_id=3585 AND s1.sample_id NOT IN (SELECT sample_id FROM sample2tag WHERE tag_id=3587)" ;
+	query ( dab.ft , r , sql ) ;
+	while ( r.getMap(datamap) ) {
+		string file_id = datamap["file_id"] ;
+		string sequenscape_sample_id = datamap["sequenscape_sample_id"].asString() ;
+if ( sequenscape_sample_id != "2578938" ) continue ; // TESTING
+		sql = "SELECT * FROM submission WHERE sample_id=" + sequenscape_sample_id ;
+//		updateFromSubtrackTables ( file_id , sql ) ;
+	}
+*/
 }
 
 void UpdateSanger::updateFromSubtrackTables ( string file_id , string sql_submission ) {
@@ -120,7 +136,9 @@ void UpdateSanger::updateFromSubtrackTables ( string file_id , string sql_submis
 	SQLmap datamap2 ;
 	query ( subtrack , r2 , sql_submission ) ;
 	if ( !r2.getMap(datamap2) ) return ;
+
 	for ( auto t2c = tag2col.begin() ; t2c != tag2col.end() ; t2c++ ) {
+		if ( file_id.empty() ) continue ;
 		if ( !datamap2[t2c->second].asString().empty() ) dab.setFileTag ( file_id , t2c->first , datamap2[t2c->second].asString() , note ) ;
 	}
 	string submission_id = datamap2["id"].asString() ;
@@ -135,6 +153,7 @@ void UpdateSanger::updateFromSubtrackTables ( string file_id , string sql_submis
 	}
 
 	// File size
+	if ( file_id.empty() ) return ;
 	sql = "SELECT * FROM files WHERE sub_id=" + submission_id + " LIMIT 1" ;
 	query ( subtrack , r2 , sql ) ;
 	if ( r2.getMap(datamap2) ) {
