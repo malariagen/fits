@@ -32,4 +32,7 @@ Subtrack is another Sanger database. From here, mostly EBI-related IDs are impor
 * [relevant code](https://github.com/malariagen/fits/blob/master/src/update_sanger.cpp)
 
 ### Solaris
-A lot of metadata has been imported from Sanger, mainly sample-related information such as Oxford codes and Alfresco study associations. Much of that information came from the `vw_vrpipe` view, which is considered the "truth set" for many samples and file-to-sample associations. As this view is, in essence, underlying all previous Pv and Pf release builds, its information has replaced metadata from other sources, in case of conflict.
+A lot of metadata has been imported from Solaris, mainly sample-related information such as Oxford codes and Alfresco study associations. Much of that information came from the `vw_vrpipe` view, which is considered the "truth set" for many samples and file-to-sample associations, as well as sample-study mappings.
+Species (`study_group`) and pre-Alfresco project names (`project_code`) have also been imported from there.
+Some data was also imported from `vw_sample2lane`, though `vw_vrpipe` would have had priority, in case of conflict.
+Documenting the source of specific information in FITS can be done over time.
