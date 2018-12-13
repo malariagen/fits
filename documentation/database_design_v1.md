@@ -44,8 +44,12 @@ A `type` field indicates the subject area of the tag, but no functionality or te
 Tags are used in conjunction with a `value` and a `file` or `sample` in the respective tables (see below).
 Tags are also used directly (without values) in the `file` table to indicate the storage system, and in the `file_relation` table to indicate the relation of two files.
 
-Tags can be self-documenting via their `note` field.
-Detailed description is therefore not part of this document.
+Tags can, and should, be self-documenting via their `note` field.
+Detailed description of individual tags is therefore not part of this document.
+Use common sense for the `note` documentation.
+
+At the moment, tags can only be added by Magnus.
+This might change with more people getting write access to the FITS database, or alternative interfaces (e.g. web app) in the future.
 
 ## file2tag/sample2tag
 These two tables are identical in structure.
@@ -57,6 +61,7 @@ Metadata includes data about the file itself (e.g. size, MD5 hashsum), external 
 
 This data is collected from various sources, including Solaris, iRODs (via baton), and the Multi-LIMS Warehouse and subtrack databases.
 The source and date of import is often given in the `note` field (this should be done automatically now, but may be missing from early imports).
+See the [processes documentation](https://github.com/malariagen/fits/blob/master/documentation/processes.md) for details.
 
 ## sample2file
 This table models a relation between `sample`s and `file`s, by linking a `sample_id` and a `file_id`.
@@ -101,3 +106,7 @@ Due to a regression in the MySQL version used by Sanger, this view is currently 
 
 ## Other views
 There are several other views in the database, but they are temporary/test ones, and are not an essential part of FITS. They may be altered or removed at any point in the future. Therefore, if a view is not listed here, ignore it.
+
+# Access
+For obvious basic operational security reasons, database access details can not, and should not, be part of this documentation, or this repository.
+For access to the FITS database, ask Magnus.
