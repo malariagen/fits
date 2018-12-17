@@ -68,7 +68,7 @@ void UpdateSanger::fixMissingMetadataFromFileAvus ( string missing_tag_id , stri
 			string attribute = avu["attribute"].get<std::string>() ;
 			if ( attribute != avu_key ) continue ;
 			string value = avu["value"].get<std::string>() ;
-cout << attribute << " : " << value << endl ;
+//cout << attribute << " : " << value << endl ;
 			addFileTagFromAvu ( file_id , attribute , value , note ) ;
 		}
 	}
@@ -174,6 +174,7 @@ void UpdateSanger::fixMissingMetadata () {
 	string sql ;
 
 	// Update sequenscape study data from MLWH
+	string note = "Imported from MLWH study/iseq_flowcell on " + getCurrentTimestamp() ;
 	sql = "SELECT sample_id,`value` FROM sample2tag s1 WHERE s1.tag_id=1362 AND s1.sample_id NOT IN (select DISTINCT s2.sample_id FROM sample2tag s2 WHERE s2.tag_id=3594)" ;
 	query ( dab.ft , r , sql ) ;
 	while ( r.getMap(datamap) ) {
@@ -183,9 +184,9 @@ void UpdateSanger::fixMissingMetadata () {
 		sql = "SELECT study.* FROM study,iseq_flowcell WHERE study.id_lims='SQSCP' AND id_sample_tmp=" + datamap["value"].asString() + " AND iseq_flowcell.id_study_tmp=study.id_study_tmp LIMIT 1" ; // Only one study, one hopes
 		query ( mlwh , r2 , sql ) ;
 		while ( r2.getMap(datamap2) ) {
-			dab.setSampleTag ( fits_sample_id , "MLW study ID" , datamap2["id_study_tmp"] ) ;
-			dab.setSampleTag ( fits_sample_id , "sequenscape study ID" , datamap2["id_study_lims"] ) ;
-			dab.setSampleTag ( fits_sample_id , "sequenscape study name" , datamap2["name"] ) ;
+			dab.setSampleTag ( fits_sample_id , "MLW study ID" , datamap2["id_study_tmp"] , note ) ;
+			dab.setSampleTag ( fits_sample_id , "sequenscape study ID" , datamap2["id_study_lims"] , note ) ;
+			dab.setSampleTag ( fits_sample_id , "sequenscape study name" , datamap2["name"] , note ) ;
 		}
 	}
 
@@ -215,13 +216,15 @@ void UpdateSanger::fixMissingMetadataForTag ( string tag_name , string mlwh_colu
 	}
 	sql += ") AND `" + mlwh_column_name + "` IS NOT NULL" ;
 	query ( mlwh , r , sql ) ;
+
+	string note = "Imported from MLWH.sample on " + getCurrentTimestamp() ;
 	while ( r.getMap(datamap) ) {
 		db_id mlwh_id = datamap["id_sample_tmp"].asInt() ;
 		if ( mlwh_sample2fits_sample.find(mlwh_id) == mlwh_sample2fits_sample.end() ) continue ; // Paranoia
 		string sample_name = datamap[mlwh_column_name] ;
 		if ( sample_name.empty() ) continue ;
 		db_id fits_sample_id = mlwh_sample2fits_sample[mlwh_id] ;
-		dab.setSampleTag ( fits_sample_id , tag_name , sample_name ) ;
+		dab.setSampleTag ( fits_sample_id , tag_name , sample_name , note ) ;
 	}
 }
 
@@ -412,8 +415,8 @@ void UpdateSanger::addFilesForSampleFromBaton ( string mlwh_sample_id , vector <
 			file_has_id = true ;
 			dab.setSampleFile ( fits_sample_id , file_id , note ) ;
 
-			dab.setFileTag ( file_id , "iRODS sequencing" ) ;
-			dab.setFileTag ( file_id , "file size" , entry["size"].get<std::string>() ) ;
+			dab.setFileTag ( file_id , "iRODS sequencing" , note ) ;
+			dab.setFileTag ( file_id , "file size" , entry["size"].get<std::string>() , note ) ;
 
 			string run , lane , tag ;
 
@@ -568,6 +571,7 @@ void UpdateSanger::addTaxonID () {
 void UpdateSanger::addLaneMetrics () {
 // SUBQUERY RETURNS MULTIPLE RESULTS; TODO FIXME
 	auto fields = { "instrument_name" , "instrument_model" , "run_complete" , "qc_complete" } ;
+    string note = "Imported from BATON on " + getCurrentTimestamp() ;
 	SQLresult r ;
 	SQLmap map ;
 	string sql = "SELECT"
@@ -590,7 +594,7 @@ void UpdateSanger::addLaneMetrics () {
 			sql = "SELECT " + string(field_name) + " FROM iseq_run_lane_metrics WHERE id_run=" + map["run"].asString() + " AND position=" + map["lane"].asString() + " LIMIT 1" ;
 			vector <string> data = queryFirstColumn ( mlwh , sql ) ;
 			if ( data.size() != 1 ) continue ;
-			for ( auto& file_id: file_ids ) dab.setFileTag ( file_id , field_name , data[0] ) ;
+			for ( auto& file_id: file_ids ) dab.setFileTag ( file_id , field_name , data[0] , note ) ;
 		}
 	}
 }
