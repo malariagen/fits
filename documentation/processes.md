@@ -8,12 +8,13 @@ The FITS command line tool (_see below_) is adding new data to the FITS database
 
 Manual imports and updates have taken place directly in the database. Manual changes will continue to resolve conflicts between different data sources, and establish a "truth set". 
 
-Manually altered data can be annotated as to the date/reason of the edit.
+Manually altered data can, and should, be annotated as to the date/reason of the edit.
 
 ## FITS command line tool
-All automated data import into FITS currently flows through the FITS command line tool ([source](https://github.com/wtsi-team112/fits/tree/master/src)), especially the `update_sanger` sub-command. For implementation details, please see the relevant code.
+All automated data import into FITS currently flows through the [FITS command line tool](https://github.com/malariagen/fits/blob/master/documentation/fits_command_line_tool.md), especially the `update_sanger` sub-command. For implementation details, please see the relevant code.
 
 The `sanity_checks` sub-command can perform some sanity checks (e.g. metadata that should have only one value but has more, such as "requested insert size").
+This should become a regular review process post MVP V1.
 
 ## Data sources
 ### MLWH (Multi-LIMS Warehouse)
@@ -35,4 +36,12 @@ Subtrack is another Sanger database. From here, mostly EBI-related IDs are impor
 A lot of metadata has been imported from Solaris, mainly sample-related information such as Oxford codes and Alfresco study associations. Much of that information came from the `vw_vrpipe` view, which is considered the "truth set" for many samples and file-to-sample associations, as well as sample-study mappings.
 Species (`study_group`) and pre-Alfresco project names (`project_code`) have also been imported from there.
 Some data was also imported from `vw_sample2lane`, though `vw_vrpipe` would have had priority, in case of conflict.
-Documenting the source of specific information in FITS can be done over time.
+Documenting the source of specific information in FITS can, and should, be done over time.
+
+## Updates
+
+### Regular updates
+Data from MLWH, iRODs/baton, and Subtrack is inported automatically on a daily basis.
+
+### Data correction
+If incorrect data has been entered into the systems providing the data for regular updates, this should be flagged with the person in charge of maintaining FITS data, to correct the data if/when it enters FITS.
