@@ -21,7 +21,7 @@ void UpdateSanger::updateFromMLWH () {
 
 // For samples with MLWH sample ID but no Sequenscape sample ID, import the latter from MLWH
 void UpdateSanger::updateSequenscapeSampleIDfromMLWHsampleID () {
-	string note = "Imported from mlwh.sample on " + getCurrentTimestamp() ;
+	Note note ( "mlwh.sample" ) ;
 	string sql = "SELECT sample_id,value AS mlwh_sample_id FROM sample2tag s1 WHERE tag_id=1362 AND s1.sample_id NOT IN (SELECT sample_id FROM sample2tag WHERE tag_id=3585)" ;
 	SQLresult r ;
 	SQLmap datamap ;
@@ -63,7 +63,7 @@ void UpdateSanger::fixMissingMetadataFromFileAvus ( string missing_tag_id , stri
 		string file_id = datamap["file_id"] ;
 		json j = json::parse ( datamap["value"].asString() ) ;
 
-		string note = "Imported from BATON on " + getCurrentTimestamp() ;
+		Note note ( "BATON" ) ;
 		for ( auto avu: j["file"]["avus"] ) {
 			string attribute = avu["attribute"].get<std::string>() ;
 			if ( attribute != avu_key ) continue ;
@@ -130,7 +130,7 @@ void UpdateSanger::updateFromSubtrackTables ( string file_id , string sql_submis
 		{ "ENA run accession ID" , "ebi_run_acc" }
 	} ;
 	SubtrackDatabase subtrack ;
-	string note = "Imported from subtrack.submission on " + getCurrentTimestamp() ;
+	Note note ( "subtrack.submission" ) ;
 	string sql ;
 	SQLresult r2 ;
 	SQLmap datamap2 ;
@@ -174,7 +174,7 @@ void UpdateSanger::fixMissingMetadata () {
 	string sql ;
 
 	// Update sequenscape study data from MLWH
-	string note = "Imported from MLWH study/iseq_flowcell on " + getCurrentTimestamp() ;
+	Note note ( "mlwh.study/mlwh.iseq_flowcell" ) ;
 	sql = "SELECT sample_id,`value` FROM sample2tag s1 WHERE s1.tag_id=1362 AND s1.sample_id NOT IN (select DISTINCT s2.sample_id FROM sample2tag s2 WHERE s2.tag_id=3594)" ;
 	query ( dab.ft , r , sql ) ;
 	while ( r.getMap(datamap) ) {
@@ -217,7 +217,7 @@ void UpdateSanger::fixMissingMetadataForTag ( string tag_name , string mlwh_colu
 	sql += ") AND `" + mlwh_column_name + "` IS NOT NULL" ;
 	query ( mlwh , r , sql ) ;
 
-	string note = "Imported from MLWH.sample on " + getCurrentTimestamp() ;
+	Note note ( "mlwh.sample" ) ;
 	while ( r.getMap(datamap) ) {
 		db_id mlwh_id = datamap["id_sample_tmp"].asInt() ;
 		if ( mlwh_sample2fits_sample.find(mlwh_id) == mlwh_sample2fits_sample.end() ) continue ; // Paranoia
@@ -395,7 +395,7 @@ void UpdateSanger::addFilesForSampleFromBaton ( string mlwh_sample_id , vector <
 
 // done by addLaneMetric: "instrument_name" , "instrument_model" , "run_complete" , "qc_complete"
 
-    string note = "Imported from BATON on " + getCurrentTimestamp() ;
+	Note note ( "BATON" ) ;
 
 	for ( auto entry: json_data ) {
 
@@ -407,7 +407,7 @@ void UpdateSanger::addFilesForSampleFromBaton ( string mlwh_sample_id , vector <
 		SQLmap flowcell ;
 
 		if ( shouldWeAddThisFile ( filename , full_path ) ) {
-			file_id = dab.getOrCreateFileID ( full_path , filename , 1 ) ;
+			file_id = dab.getOrCreateFileID ( full_path , filename , 1 , note ) ;
 			if ( file_id == 0 ) {
 				cout << "FAILED TO CREATE FILE ENTRY FOR " << full_path << " of MLWH sample " << mlwh_sample_id << endl ;
 				continue ;
@@ -415,7 +415,7 @@ void UpdateSanger::addFilesForSampleFromBaton ( string mlwh_sample_id , vector <
 			file_has_id = true ;
 			dab.setSampleFile ( fits_sample_id , file_id , note ) ;
 
-			dab.setFileTag ( file_id , "iRODS sequencing" , note ) ;
+			dab.setFileTag ( file_id , "iRODS sequencing" , "" , note ) ;
 			dab.setFileTag ( file_id , "file size" , entry["size"].get<std::string>() , note ) ;
 
 			string run , lane , tag ;
@@ -475,7 +475,7 @@ void UpdateSanger::addFilesForSampleFromBaton ( string mlwh_sample_id , vector <
 	}
 }
 
-void UpdateSanger::addFileTagFromAvu ( string file_id , string attribute , string value , string note , string fits_sample_id ) {
+void UpdateSanger::addFileTagFromAvu ( string file_id , string attribute , string value , Note note , string fits_sample_id ) {
 	if ( attribute == "type" ) dab.setFileTag ( file_id , "file type" , value , note ) ;
 	else if ( attribute == "reference" ) dab.setFileTag ( file_id , "CRAM reference" , value , note ) ;
 	else if ( attribute == "id_run" ) dab.setFileTag ( file_id , "sequencing run" , value , note ) ;
@@ -515,18 +515,18 @@ void UpdateSanger::ensureMLWHsamplesExistInFITS ( const map <string,string> &mlw
 	vector <string> mlwh_sample_ids ;
 	for ( auto s2s: mlwh_sample2mlwh_study ) mlwh_sample_ids.push_back ( s2s.first ) ;
 	if ( mlwh_sample_ids.empty() ) return ;
-	sql = "SELECT DISTINCT `value` FROM vw_sample_tag WHERE tag_id=" + i2s(dab.getTagID("MLW sample ID")) + " AND `value` IN (" + implode(mlwh_sample_ids,true) + ")" ;
+	sql = "SELECT DISTINCT `value` FROM sample2tag WHERE tag_id=" + i2s(dab.getTagID("MLW sample ID")) + " AND `value` IN (" + implode(mlwh_sample_ids,true) + ")" ;
 	query ( dab.ft , r , sql ) ;
 	while ( r.getMap(datamap) ) sample_exists[datamap["value"]] = true ;
 
 	// Now create new sample entries for the new ones
 	uint32_t number_of_samples_created = 0 ;
-	string note = "imported " + getCurrentTimestamp() ;
+	Note note ( "mlwh.study/mlwh.sample" ) ;
 	for ( auto s2s: mlwh_sample2mlwh_study ) { // s2s.first: MLWH sample id ; s2s.second: MLWH study ID
 		if ( sample_exists.find(s2s.first) != sample_exists.end() ) continue ; // No need to create this sample
 		vector <string> sample_ids = dab.getSamplesForTag ( "MLW sample ID" , s2s.first ) ;
 		if ( !sample_ids.empty() ) continue ; // Some times, this triggers. Should not, as sample_exists should already contain IDs. Huh.
-		sql = "INSERT INTO sample (name) VALUES (" + dab.ft.quote("MLWH sample #"+s2s.first) + ")" ;
+		sql = "INSERT INTO sample (name,note_id) VALUES (" + dab.ft.quote("MLWH sample #"+s2s.first) + "," + note.getID(dab.ft) + ")" ;
 		query ( dab.ft , r , sql ) ;
 
 		string fits_sample_id = i2s ( dab.ft.getLastInsertID() ) ;
@@ -571,7 +571,7 @@ void UpdateSanger::addTaxonID () {
 void UpdateSanger::addLaneMetrics () {
 // SUBQUERY RETURNS MULTIPLE RESULTS; TODO FIXME
 	auto fields = { "instrument_name" , "instrument_model" , "run_complete" , "qc_complete" } ;
-    string note = "Imported from BATON on " + getCurrentTimestamp() ;
+	Note note ( "BATON" ) ;
 	SQLresult r ;
 	SQLmap map ;
 	string sql = "SELECT"
