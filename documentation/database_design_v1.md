@@ -1,10 +1,10 @@
 # Database design
 This document describes the database used in the FITS file tracking system.
 It does _not_ describe FITS in total.
-See [overview](https://github.com/wtsi-team112/fits/raw/master/documentation/overview.md) and [MVP V1](https://github.com/wtsi-team112/fits/raw/master/documentation/mvp_v1.md) for that.
+See [overview](https://github.com/malariagen/fits/blob/master/documentation/overview.md) and [MVP V1](https://github.com/malariagen/fits/blob/master/documentation/mvp_v1.md) for that.
 
 # Design principles
-Tables if the FITS database are _normalized_, that is, they contain many rows but few columns.
+Tables in the FITS database are _normalized_, that is, they contain many rows but few columns.
 Relations between rows in tables are defined through other (also normalized) tables.
 
 That approach increases flexibility, but makes it somewhat more involved to query data.
@@ -27,7 +27,7 @@ These annotations carry (almost) all metadata for either.
 ![](https://github.com/wtsi-team112/fits/raw/master/documentation/FITS_database_schema_v1.png)
 
 # Tables
-Individual fields not described here should be annotated in the SQL schema of the respective table.
+Individual fields not described here are annotated in the SQL schema of the respective table.
 
 ## file
 The `file` table contains the file name and full path, a `tag` reference for `storage` (currently: Sanger sequencing iRODs only. It is used to make it faster and easier to differentiate between different storage systems, once FITS uses more than one. This information is also present in `file2tag`).
@@ -37,9 +37,9 @@ Its `id` field is the unique identifier (UID) for a file.
 The `sample` table consists of just the id field for internal referencing, and an arbitrary name given on creation (currently, like “Sequenscape sample #1648793”).
 
 ## tag
-The `tag` table contains a short list of tags to be used as metadata with samples and files.
+The `tag` table contains a short list of tags (59 as of 17 Dec 2018) to be used as metadata with samples and files.
 Its main information are the `id` and `name` fields, with some annotation.
-A `type` field indicates the subject area of the tag, but no functionality or technical limitation in derived from that.
+A `type` field indicates the subject area of the tag, but no functionality or technical limitation is derived from that.
 
 Tags are used in conjunction with a `value` and a `file` or `sample` in the respective tables (see below).
 Tags are also used directly (without values) in the `file` table to indicate the storage system, and in the `file_relation` table to indicate the relation of two files.
