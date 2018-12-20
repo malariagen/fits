@@ -9,6 +9,13 @@ This tutorial assumes a basic knowledge of MySQL syntax.
 However, future plans include a command-line query tool that would make it easier for users to create manifest files.
 See [this issue](https://github.com/malariagen/fits/issues/37) and the [MPV V1](https://github.com/wtsi-team112/fits/blob/master/documentation/mvp_v1.md) document.
 
+## Historical context on plasmodium builds
+Before Jim Stalker left the group, build manifests were generally created from Solaris, e.g. using script `/nfs/team112_internal/production/tools/scripts/pf_from_solaris.sh`. However, once samples were no longer being registered in Solaris (after the switch to ROMA), a different approach was required. For the Pf 6.1 build, Jim identified a set of files by querying mlwh for a set of sequencescape stuides supplied by Sonia. He then put into the 6.1 build any of these files that was not in Pf 6.0.
+
+Before creating the Pf 6.2 build, Richard wanted to convince himself that any Pf manifest could be created using mlwh, including a manifest that included samples that were in Pf 6.0. In doing this, Richard realised that there were a number of differences between Solaris and mlwh in the mappings between files and samples, studies and taxa. Richard overcame this by creating a set of "exceptions" files (https://github.com/malariagen/SIMS/tree/master/meta/mlwh), which, when applied to mlwh data, would recreate the data as in Solaris, i.e. these files are the "diff" between mlwh and Solaris. Richard has subsequently made further minor changes to these exceptions files as issues have come up (https://github.com/malariagen/SIMS/issues/25, https://github.com/malariagen/SIMS/issues/26, https://github.com/malariagen/SIMS/issues/27).
+
+FITS has taken a slightly different approach whereby all data from mlwh, iRODS and Solaris is loaded in to FITS, but then certain rules are applied to populate certain key tags such as "oxford sample ID" and "Alfresco study" in such a way that data from Solaris overrides data in mlwh or iRODS. The end result should be the same as the approach used by Richard.
+
 
 ## Specify what you want, then filter
 The general strategy is to specify a _superset_ of the data you want (to make sure you get all of it), then filter out the parts you don't want.
