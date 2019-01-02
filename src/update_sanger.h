@@ -23,7 +23,7 @@ protected:
 	void fixMissingMetadata () ;
 	void fixMissingMetadataForTag ( string tag_name , string mlwh_column_name ) ;
 	void fixMissingMetadataFromFileAvus ( string missing_tag_id , string avu_key ) ;
-	void addFileTagFromAvu ( string file_id , string attribute , string value , string note , string fits_sample_id = "" ) ;
+	void addFileTagFromAvu ( string file_id , string attribute , string value , Note note , string fits_sample_id = "" ) ;
 	void updateMissingFileJSON () ;
 	void updateSequenscapeSampleIDfromMLWHsampleID () ;
 	void updateChangedFlowcellData () ;

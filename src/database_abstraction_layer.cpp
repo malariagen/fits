@@ -1,6 +1,36 @@
 #include "database_abstraction_layer.h"
 #include <algorithm>
 
+string Note::getID ( FileTrackingDatabase &ft ) {
+    if ( id > 0 ) return i2s(id) ; // Cached
+    setCurrentDay() ;
+
+    string sql = "SELECT * FROM `note` WHERE `source`="+ft.quote(source)+" AND `rationale`="+ft.quote(rationale)+" AND `day`="+ft.quote(day) ;
+    SQLmap datamap ;
+    SQLresult r = ft.query ( sql ) ;
+    while ( r.getMap(datamap) ) {
+        id = datamap["id"].asInt() ;
+        return i2s(id) ;
+    }
+
+    sql = "INSERT IGNORE INTO `note` (`source`,`rationale`,`day`) VALUES ("+ft.quote(source)+","+ft.quote(rationale)+","+ft.quote(day)+")" ;
+    ft.exec ( sql ) ;
+    id = ft.getLastInsertID() ;
+    return i2s(id) ;
+}
+
+void Note::setCurrentDay() {
+    if ( !day.empty() ) return ;
+    time_t timer;
+    char buffer[26];
+    struct tm* tm_info;
+    time(&timer);
+    tm_info = localtime(&timer);
+    strftime(buffer, 26, "%Y-%m-%d", tm_info);
+    day = buffer ;
+}
+
+//______
 
 DatabaseAbstractionLayer::DatabaseAbstractionLayer () {
     loadTags() ;
@@ -69,21 +99,20 @@ vector <string> DatabaseAbstractionLayer::getIDsForTag ( string table , string t
     return ret ;
 }
 
-bool DatabaseAbstractionLayer::setSampleFile ( db_id sample_id , db_id file_id , string note ) {
-    string sql = "INSERT IGNORE INTO sample2file (sample_id,file_id,note) VALUES (" + i2s(sample_id) + "," + i2s(file_id) + "," + ft.quote(note) + ")" ;
+bool DatabaseAbstractionLayer::setSampleFile ( db_id sample_id , db_id file_id , Note note ) {
+    string sql = "INSERT IGNORE INTO sample2file (sample_id,file_id,note_id) VALUES (" + i2s(sample_id) + "," + i2s(file_id) + "," + note.getID(ft) + ")" ;
     ft.exec ( sql ) ;
     return true ;
 }
 
-bool DatabaseAbstractionLayer::setTableTag ( string table , string id , string tag , string value , string note ) {
+bool DatabaseAbstractionLayer::setTableTag ( string table , string id , string tag , string value , Note note ) {
     db_id tag_id = getTagID ( tag ) ;
     if ( tag_id == 0 ) return false ;
 
     string field_name = getMainID4table ( table ) ;
-    string sql = "INSERT IGNORE INTO `" + table + "` (" + field_name + ",tag_id,value" ;
-    if ( !note.empty() ) sql += ",note" ;
+    string sql = "INSERT IGNORE INTO `" + table + "` (" + field_name + ",tag_id,value,note_id" ;
     sql += ") VALUES (" + ft.quote(id) + "," + ft.quote(tag_id) + "," + ft.quote(value) ;
-    if ( !note.empty() ) sql += "," + ft.quote(note) ;
+    sql += "," + note.getID(ft) ;
     sql += ")" ;
 
 //if ( table == "file2tag" ) { /* cout << sql << endl ; */ return true ; } // TESTING FIXME
@@ -109,7 +138,7 @@ vector <string> DatabaseAbstractionLayer::getSamplesForFile ( string file_id ) {
     return ret ;
 }
 
-db_id DatabaseAbstractionLayer::doGetFileID ( string full_path , string filename , db_id storage , bool create_if_missing ) {
+db_id DatabaseAbstractionLayer::doGetFileID ( string full_path , string filename , db_id storage , Note note , bool create_if_missing ) {
     string sql = "SELECT * FROM file WHERE `storage`=" + i2s(storage) + " AND `full_path`=" + ft.quote(full_path) + " LIMIT 1" ;
     SQLresult r ;
     r = ft.query ( sql ) ;
@@ -122,12 +151,13 @@ db_id DatabaseAbstractionLayer::doGetFileID ( string full_path , string filename
     if ( !create_if_missing ) return 0 ;
 
     string timestamp = getCurrentTimestamp() ;
-    sql = "INSERT IGNORE INTO file (filename,full_path,ts_created,ts_touched,storage) VALUES (" +
+    sql = "INSERT IGNORE INTO file (filename,full_path,ts_created,ts_touched,storage,note_id) VALUES (" +
         ft.quote(filename) + "," +
         ft.quote(full_path) + "," +
         ft.quote(timestamp) + "," +
         ft.quote(timestamp) + "," +
-        ft.quote(storage) + ")" ;
+        ft.quote(storage) + "," +
+        note.getID(ft) + ")" ;
 //cout << sql << endl ;
     try {
         ft.exec ( sql ) ;
