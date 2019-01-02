@@ -39,11 +39,15 @@ public:
     vector <string> getSamplesForTag ( string tag , string value = "" ) { return getIDsForTag ( "sample2tag" , tag , value ) ; }
     vector <string> getFilesForTag ( string tag , string value = "" ) { return getIDsForTag ( "file2tag" , tag , value ) ; }
     bool setSampleFile ( db_id sample_id , db_id file_id , Note note ) ;
+    string createNewSample ( string name , Note &note ) ;
 
     bool doesFileExist ( string full_path , db_id storage ) { return (getFileID(full_path,storage)) != 0 ; }
     db_id getFileID ( string full_path , db_id storage ) { Note note ; return doGetFileID ( full_path , "" , storage , note , false ) ; }
     db_id getOrCreateFileID ( string full_path , string filename , db_id storage , Note note ) { return doGetFileID ( full_path , filename , storage , note , true ) ; }
     vector <string> getSamplesForFile ( string file_id ) ;
+
+    string getKV ( string key , string default_value = "" ) ;
+    void setKV ( string key , string value ) ;
 
     FileTrackingDatabase ft ;
 

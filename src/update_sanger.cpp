@@ -9,7 +9,225 @@ UpdateSanger::UpdateSanger () {
 }
 
 void UpdateSanger::updateFromMLWH () {
-//updateFromSubtrack();exit(0);
+	if ( dab.getKV ( "use_subtrack_instead_of_irods") == "1" ) updateFromMLWHandSubtrack() ;
+	else updateFromMLWHandIRODS() ; // Default
+}
+
+void UpdateSanger::updateFromMLWHandSubtrack () {
+	vector <string> id_study_tmp = getOurMLWHstudies() ;
+// TESTING FIXME
+//	createMissingMLWHSamplesForStudies ( id_study_tmp ) ; // Creates missing samples in FITS with metadata, including LIMS ID, which we then use to match files from Subtrack
+	vector <string> id_study_lims = MLWHstudies2limsStudies ( id_study_tmp ) ; // Subtrack only knows about LIMS (=sequenscape) study IDs
+	string lims_study_list = implode(id_study_lims,false) ; // DB safe, all numeric
+
+	map <string,string> sample_lims2fits ;
+	getSampleMapSequenscapeToFITS ( sample_lims2fits ) ;
+
+	// Import files from Subtrack
+	string last_import_from_subtrack_submission = dab.getKV ( "last_import_from_subtrack_submission" ) ;
+	string last_import_from_subtrack_files = dab.getKV ( "last_import_from_subtrack_files" ) ;
+
+	SubtrackDatabase subtrack ;
+	string sql = "SELECT submission.*,files.file_name AS file_filename,MD5,bytes,files.timestamp AS file_ts FROM submission,files " ;
+	sql += " WHERE sub_id=submission.id AND study_id IN (" + lims_study_list + ")" ;
+	sql += " AND (submission.timestamp>=" + subtrack.quote(last_import_from_subtrack_submission) + " OR files.timestamp>=" + subtrack.quote(last_import_from_subtrack_files) + ")" ;
+
+	TField2Tag field2tag = { { "id" , "F:3608" } ,
+		{ "run" , "F:3578" } ,
+		{ "lane" , "F:3571" } ,
+		{ "mux" , "F:3569" } ,
+		{ "file_name" , "F:3607" } ,
+		{ "study_id" , "F:3593" } ,
+		{ "sample_id" , "F:3585" } ,
+		{ "for_release" , "" } , // 3580 Y=>1; see code below
+		{ "qc" , "" } , // 3581 Y=>1; see code below
+		{ "created" , "" } ,
+		{ "release_date" , "" } ,
+		{ "ext_db" , "" } ,
+		{ "ebi_sub_acc" , "F:3610" } ,
+		{ "ebi_study_acc" , "F:3611" } ,
+		{ "ebi_exp_acc" , "F:3612" } ,
+		{ "ebi_run_acc" , "F:3602" } ,
+		{ "ebi_sample_acc" , "B:3587" } ,
+		{ "timestamp" , "" } ,
+		{ "rel_now" , "" } ,
+		{ "human_screen" , "" } ,
+		{ "manager" , "" } ,
+		{ "library_type" , "" } ,
+		{ "ae_sub_acc" , "" } ,
+		{ "tech" , "" } ,
+		{ "file_filename" , "" } ,
+		{ "MD5" , "F:7" } ,
+		{ "bytes" , "F:3609" } ,
+		{ "file_ts" , "F:347" } } ;
+
+	Note note ( "subtrack.submission/subtrack.files" , "Imported from Subtrack in method 'UpdateSanger::updateFromMLWHandSubtrack'" ) ;
+	SQLresult r ;
+	SQLmap datamap ;
+	query ( subtrack , r , sql ) ;
+	while ( r.getMap(datamap) ) {
+		// Construct full file path
+		string file_name = datamap["file_filename"].asString() ;
+		string full_path = "/seq/" + datamap["run"].asString() + "/" + file_name ;
+		if ( !shouldWeAddThisFile ( file_name , full_path ) ) continue ;
+//cout << "Trying " << full_path << endl ;
+
+		// Get FITS sample ID for Sequenscape LIMS sample ID
+		string sample_lims_id = datamap["sample_id"].asString() ; // Sequenscape LIMS sample ID
+		if ( sample_lims2fits.find(sample_lims_id) == sample_lims2fits.end() ) { // Warn and skip if not found
+			cout << "No LIMS sample " << sample_lims_id << " in FITS, ignoring file " << full_path << endl ;
+			continue ;
+		}
+		string fits_sample_id = sample_lims2fits[sample_lims_id] ;
+//cout << "FITS sample ID " << fits_sample_id << endl ;
+
+		// Get or create entry in FITS file table
+		string fits_file_id = i2s ( dab.getOrCreateFileID ( full_path , file_name , 1 , note ) ) ;
+//cout << "FITS sample ID " << fits_sample_id << endl ;
+
+		// Link sample to file
+		dab.setSampleFile ( s2i(fits_sample_id) , s2i(fits_file_id) , note ) ;
+
+		// Import metadata
+		updateMetadataInFITS ( fits_sample_id , fits_file_id , field2tag , datamap , note ) ;
+
+		// Complex metadata
+		if ( datamap["for_release"].asString() == "Y" ) dab.setFileTag ( fits_file_id , "3580" , "1" , note ) ;
+		if ( datamap["qc"].asString() == "Y" ) dab.setFileTag ( fits_file_id , "3581" , "1" , note ) ;
+	}
+
+	// TODO
+	dab.setKV ( "last_import_from_subtrack_submission" , last_import_from_subtrack_submission ) ;
+	dab.setKV ( "last_import_from_subtrack_files" , last_import_from_subtrack_files ) ;
+}
+
+
+// Creates new FITS samples for MLWH samples in our studies
+// Adds metadata to new/existing FITS samples
+void UpdateSanger::createMissingMLWHSamplesForStudies (  vector <string> &id_study_tmp ) {
+	string last_import_from_mlwh_sample = dab.getKV ( "last_import_from_mlwh_sample" ) ;
+	bool is_initial_import = last_import_from_mlwh_sample.empty() ;
+	string mlwh_study_list = implode(id_study_tmp,false) ; // DB safe, all numeric
+	string sql = "SELECT * FROM `sample` WHERE `id_sample_tmp` IN (SELECT DISTINCT `id_sample_tmp` FROM `iseq_flowcell` WHERE `id_study_tmp` IN ("+mlwh_study_list+"))" ;
+	sql += " AND `last_updated`>=" + mlwh.quote(last_import_from_mlwh_sample) ;
+
+	TField2Tag field2tag = {
+		{ "id_sample_tmp" , "1362" } ,
+		{ "id_lims" , "3618" } ,
+		{ "uuid_sample_lims" , "" } ,
+		{ "id_sample_lims" , "3585" } ,
+		{ "last_updated" , "" } ,
+		{ "recorded_at" , "" } ,
+		{ "deleted_at" , "" } ,
+		{ "created" , "" } ,
+		{ "name" , "3586" } ,
+		{ "reference_genome" , "3619" } ,
+		{ "organism" , "3620" } ,
+		{ "accession_number" , "3587" } ,
+		{ "common_name" , "3591" } ,
+		{ "description" , "" } ,
+		{ "taxon_id" , "3600" } ,
+		{ "father" , "" } ,
+		{ "mother" , "" } ,
+		{ "replicate" , "" } ,
+		{ "ethnicity" , "" } ,
+		{ "gender" , "" } ,
+		{ "cohort" , "" } ,
+		{ "country_of_origin" , "" } ,
+		{ "geographical_region" , "" } ,
+		{ "sanger_sample_id" , "" } , // Similar/equal to name?
+		{ "control" , "" } ,
+		{ "supplier_name" , "3589" } ,
+		{ "public_name" , "" } ,
+		{ "sample_visibility" , "" } ,
+		{ "strain" , "" } ,
+		{ "consent_withdrawn" , "" } ,
+		{ "donor_id" , "" } ,
+		{ "phenotype" , "" } ,
+		{ "developmental_stage" , "" }
+	} ;
+
+	Note note ( "mlwh.sample" , "Imported from MLWH in method 'UpdateSanger::createMissingMLWHSamplesForStudies'" ) ;
+	SQLresult r ;
+	SQLmap datamap ;
+	query ( mlwh , r , sql ) ;
+	while ( r.getMap(datamap) ) {
+		string mlwh_sample_id = datamap["id_sample_tmp"].asString() ;
+		string fits_sample_id ;
+		if ( !is_initial_import ) {
+			vector <string> fits_sample_ids = dab.getSamplesForTag ( "1362" , mlwh_sample_id ) ;
+			if ( fits_sample_ids.size() == 1 ) fits_sample_id = fits_sample_ids[0] ;
+			else if ( fits_sample_ids.size() > 1 ) die ( "Multiple FITS samples for MLWH ID '" + mlwh_sample_id + "', aborting import!" ) ;
+		}
+		if ( fits_sample_id.empty() ) fits_sample_id = dab.createNewSample ( "MLWH sample #"+mlwh_sample_id , note ) ;
+		if ( fits_sample_id.empty() ) die ( "Could not find/create FITS sample for MLWH " + mlwh_sample_id + ", aborting import!" ) ;
+		updateMetadataInFITS ( fits_sample_id , "" , field2tag , datamap , note ) ;
+
+		string last_updated = datamap["last_updated"].asString() ;
+		if ( last_import_from_mlwh_sample < last_updated ) last_import_from_mlwh_sample = last_updated ;
+	}
+
+	dab.setKV ( "last_import_from_mlwh_sample" , last_import_from_mlwh_sample ) ;
+}
+
+void UpdateSanger::getSampleMapSequenscapeToFITS ( map <string,string> &sample_lims2fits ) {
+	sample_lims2fits.clear() ;
+	string sql = "SELECT sample_id,value FROM sample2tag WHERE tag_id=3585" ;
+	SQLresult r ;
+	SQLmap datamap ;
+	query ( dab.ft , r , sql ) ;
+	while ( r.getMap(datamap) ) {
+		sample_lims2fits[datamap["value"].asString()] = datamap["sample_id"].asString() ;
+	}
+}
+
+void UpdateSanger::updateMetadataInFITS ( string fits_sample_id , string fits_file_id , const TField2Tag &field2tag , SQLmap &datamap , Note &note ) {
+	for ( auto f2t : field2tag ) { // f2t = { field_name , tag_id }
+		if ( f2t.second.empty() ) continue ; // No tag ID specified
+//cout << "TRYING " << f2t.first << " => " << f2t.second << endl ;
+		if ( datamap.find(f2t.first) == datamap.end() ) continue ; // result does not contain this field name
+		if ( datamap[f2t.first].isNull() ) continue ; // Don't set NULL
+//cout << "Not null..." << endl ;
+
+		bool do_update_sample = !fits_sample_id.empty() ;
+		bool do_update_file = !fits_file_id.empty() ;
+		string tag_id = f2t.second ;
+		string value = datamap[f2t.first].asString() ;
+
+		if ( tag_id.size()>2 && tag_id[1] == ':' ) { // Possible prefix pattern: /^[FSB]:/
+			if ( tag_id[0] == 'F' ) { do_update_sample = false ; do_update_file = true ; } // Force update file
+			if ( tag_id[0] == 'S' ) { do_update_sample = true ; do_update_file = false ; } // Force update sample
+			if ( tag_id[0] == 'B' ) { do_update_sample = true ; do_update_file = true ; } // Force update both
+			tag_id = tag_id.substr(2) ;
+		}
+
+		if ( do_update_sample && fits_sample_id.empty() ) die ( "UpdateSanger::updateMetadataInFITS : Forcing sample for "+tag_id+" but fits_sample_id is empty" ) ;
+		if ( do_update_file && fits_file_id.empty() ) die ( "UpdateSanger::updateMetadataInFITS : Forcing file for "+tag_id+" but fits_file_id is empty" ) ;
+//cout << tag_id << " : '" << value << "'" << endl ;
+//cout << do_update_sample << "/" << do_update_file << " / " << fits_sample_id << " / " << fits_file_id << endl ;
+		if ( do_update_sample ) dab.setSampleTag ( fits_sample_id , tag_id , value , note ) ;
+		if ( do_update_file ) dab.setFileTag ( fits_file_id , tag_id , value , note ) ;
+	}
+}
+
+vector <string> UpdateSanger::MLWHstudies2limsStudies ( vector <string> &id_study_tmp ) {
+	vector <string> ret ;
+	string mlwh_study_list = implode(id_study_tmp,false) ; // DB safe, all numeric
+	if ( mlwh_study_list.empty() ) die ( "UpdateSanger::MLWHstudies2limsStudies : empty id_study_tmp" ) ;
+	string sql = "SELECT DISTINCT id_study_lims FROM study WHERE id_study_tmp IN (" + mlwh_study_list + ")" ;
+	SQLresult r ;
+	SQLmap datamap ;
+	query ( mlwh , r , sql ) ;
+	while ( r.getMap(datamap) ) {
+		ret.push_back ( datamap["id_study_lims"].asString() ) ;
+	}
+	if ( ret.size() == 0 ) die ( "UpdateSanger::MLWHstudies2limsStudies : no id_study_lims found" ) ;
+	return ret ;
+}
+
+// _______
+
+void UpdateSanger::updateFromMLWHandIRODS () {
 	updateChangedFlowcellData() ;
 
 	// Update metadata
@@ -639,9 +857,15 @@ void UpdateSanger::report ( string s ) {
 	cout << s << endl ;
 }
 
+void UpdateSanger::die ( string s ) {
+	cerr << s << endl ;
+	exit ( 1 ) ;
+}
+
 bool UpdateSanger::shouldWeAddThisFile ( string filename , string full_path ) {
 	bool ret = true ;
 	if ( full_path.find("/no_cal/") != std::string::npos ) return false ; // Hard exception
+	if ( full_path.find(".srf") != std::string::npos ) return false ; // Hard exception
 	for ( auto p = 2 ; p < filename.size() ; p++ ) {
 		if ( filename[p-2]=='#' && filename[p-1]=='0' && (filename[p]=='_'||filename[p]=='.') ) ret = false ; // "#0" file, do not add
 	}

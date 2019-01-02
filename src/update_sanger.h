@@ -12,7 +12,10 @@ public:
 	void updatePivotView ( string table ) ;
 
 protected:
+	typedef vector <pair <string,string> > TField2Tag ;
+
 	void report ( string s ) ;
+	void die ( string s ) ;
 	vector <string> getOurMLWHstudies() ;
 //	void processFlowcell ( SQLmap &map ) ;
 	string getBatonCommandForSequenscapeSample ( string sequenscape_sample_id ) ;
@@ -34,6 +37,12 @@ protected:
 	void updateSampleMetadata ( db_id fits_sample_id ) ;
 	vector <string> getMLWHSampleIDsWithoutFiles () ;
 	bool isFlowcellMissingFile ( string id_iseq_flowcell_tmp ) ;
+	void updateFromMLWHandIRODS () ;
+	void updateFromMLWHandSubtrack () ;
+	vector <string> MLWHstudies2limsStudies ( vector <string> &id_study_tmp ) ;
+	void createMissingMLWHSamplesForStudies (  vector <string> &id_study_tmp ) ;
+	void updateMetadataInFITS ( string fits_sample_id , string fits_file_id , const TField2Tag &field2tag , SQLmap &datamap , Note &note ) ;
+	void getSampleMapSequenscapeToFITS ( map <string,string> &sample_lims2fits ) ;
 
 	vector <string> queryFirstColumn ( MysqlDatabase &db , string sql ) ;
 	void query ( MysqlDatabase &db , SQLresult &r , string sql ) ;

@@ -27,6 +27,13 @@ int StringTools::s2i ( string s ) {
 	return atoi ( s.c_str() ) ;
 }
 
+bool StringTools::isNumeric ( string s ) {
+    for ( auto c:s ) {
+        if ( c<'0' || c>'9' ) return false ;
+    }
+    return true ;
+}
+
 string StringTools::exec(string cmd) {
     std::array<char, 128> buffer;
     std::string result;

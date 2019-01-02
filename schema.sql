@@ -399,9 +399,6 @@ END ;$$
 # TAG DATA
 
 
-LOCK TABLES `tag` WRITE;
-/*!40000 ALTER TABLE `tag` DISABLE KEYS */;
-
 INSERT INTO `tag` (`id`, `name`, `type`, `note`, `use_for_pivot`, `min_sample`, `max_sample`, `min_file`, `max_file`, `avu_field`, `iseq_flowcell_field`)
 VALUES
   (1,'iRODS sequencing','storage',NULL,1,NULL,NULL,NULL,NULL,NULL,NULL),
@@ -462,7 +459,7 @@ VALUES
   (3614,'sequenscape library lims ID','file metadata','[Cathrine Baker]: \"is the \'Human barcode\', a readable barcode label that is used physically in the lab\"',1,NULL,NULL,NULL,1,NULL,'id_library_lims'),
   (3615,'sequenscape library name','file metadata','[Cathrine Baker]: \"is the library generated- same as [tag 3613]\"',1,NULL,NULL,NULL,1,'library',NULL),
   (3616,'Solaris study group','sample metadata','means \"species\"; imported from solaris.vw_vrpipe',1,NULL,1,NULL,NULL,NULL,NULL),
-  (3617,'Solaris project code','sample metadata','the old, pre-Alfresco Solaris project name; imported from solaris.vw_vrpipe',1,NULL,NULL,NULL,NULL,NULL,NULL);
-
-/*!40000 ALTER TABLE `tag` ENABLE KEYS */;
-UNLOCK TABLES;
+  (3617,'Solaris project code','sample metadata','the old, pre-Alfresco Solaris project name; imported from solaris.vw_vrpipe',1,NULL,NULL,NULL,NULL,NULL,NULL),
+  (3618,'MLWH LIMS ID','sample metadata','mlwh sample.id_lims (a short string)',1,NULL,NULL,NULL,NULL,NULL,NULL),
+  (3619,'MLWH reference genome','sample metadata','mlwh sample.reference_genome (a string)',1,NULL,NULL,NULL,NULL,NULL,NULL),
+  (3620,'MLWH organism','sample metadata','mlwh sample.organism (a string)',1,NULL,NULL,NULL,NULL,NULL,NULL);

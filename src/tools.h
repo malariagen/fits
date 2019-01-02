@@ -13,6 +13,7 @@ public:
 	string implode ( const vector <string> &vs , bool quote = true ) ;
 	string i2s ( int i ) ;
 	int s2i ( string s ) ;
+	bool isNumeric ( string s ) ;
 	string exec(string cmd) ;
 	string getCurrentTimestamp () ;
 	vector <string> split ( string main , char sep ) {
