@@ -40,8 +40,8 @@ void UpdateSanger::createMissingFilesFromSubtrack ( vector <string> &id_study_tm
 		{ "lane" , "F:3571" } ,
 		{ "mux" , "F:3569" } ,
 		{ "file_name" , "F:3607" } ,
-		{ "study_id" , "F:3593" } ,
-		{ "sample_id" , "F:3585" } ,
+		{ "study_id" , "B:3593" } ,
+		{ "sample_id" , "B:3585" } ,
 		{ "for_release" , "" } , // 3580 Y=>1; see code below
 		{ "qc" , "" } , // 3581 Y=>1; see code below
 		{ "created" , "" } ,
@@ -77,8 +77,8 @@ void UpdateSanger::createMissingFilesFromSubtrack ( vector <string> &id_study_tm
 		// Get FITS sample ID for Sequenscape LIMS sample ID
 		string sample_lims_id = datamap["sample_id"].asString() ; // Sequenscape LIMS sample ID
 		if ( sample_lims2fits.find(sample_lims_id) == sample_lims2fits.end() ) { // Warn and skip if not found
-			cout << "No LIMS sample " << sample_lims_id << " in FITS, ignoring file " << full_path << endl ;
-			continue ;
+			cout << "No LIMS sample " << sample_lims_id << " in FITS, creating one for file " << full_path << endl ;
+			sample_lims2fits[sample_lims_id] = dab.createNewSample ( "Created for file in Subtrack (sample not in MLWH!)" , note ) ;
 		}
 		string fits_sample_id = sample_lims2fits[sample_lims_id] ;
 
@@ -94,6 +94,10 @@ void UpdateSanger::createMissingFilesFromSubtrack ( vector <string> &id_study_tm
 		// Complex metadata
 		if ( datamap["for_release"].asString() == "Y" ) dab.setFileTag ( fits_file_id , "3580" , "1" , note ) ;
 		if ( datamap["qc"].asString() == "Y" ) dab.setFileTag ( fits_file_id , "3581" , "1" , note ) ;
+
+		// Update last dates
+		if ( last_import_from_subtrack_submission < datamap["timestamp"].asString() ) last_import_from_subtrack_submission = datamap["timestamp"].asString() ;
+		if ( last_import_from_subtrack_files < datamap["file_ts"].asString() ) last_import_from_subtrack_files = datamap["file_ts"].asString() ;
 	}
 
 	dab.setKV ( "last_import_from_subtrack_submission" , last_import_from_subtrack_submission ) ;
