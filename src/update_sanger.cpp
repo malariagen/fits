@@ -14,6 +14,7 @@ void UpdateSanger::updateFromMLWH () {
 }
 
 void UpdateSanger::updateFromMLWHandSubtrack () {
+addMissingFileMetadataFlowcell() ; exit(0) ; // TESTING FIXME
 	vector <string> id_study_tmp = getOurMLWHstudies() ;
 	createMissingMLWHSamplesForStudies ( id_study_tmp ) ; // Creates missing samples in FITS with metadata, including LIMS ID, which we then use to match files from Subtrack
 	createMissingFilesFromSubtrack ( id_study_tmp ) ; // Create missing fimes from Subtrack in FITS, and add metadata
@@ -180,6 +181,7 @@ void UpdateSanger::createMissingMLWHSamplesForStudies (  vector <string> &id_stu
 void UpdateSanger::addMissingFileMetadata () {
 	addMissingFileMetadataFileType() ;
 	addMissingFileMetadataFileSize() ;
+	addMissingFileMetadataFlowcell() ;
 }
 
 void UpdateSanger::addMissingFileMetadataFileType () {
@@ -208,6 +210,53 @@ void UpdateSanger::addMissingFileMetadataFileSize () {
 		string fits_file_id = datamap["file_id"].asString() ;
 		string file_size = datamap["value"].asString() ;
 		dab.setFileTag ( fits_file_id , "8" , file_size , note ) ;
+	}
+}
+
+void UpdateSanger::addMissingFileMetadataFlowcell () {
+	string sql = "SELECT * FROM file WHERE id NOT IN (SELECT file_id FROM file2tag WHERE tag_id=3570)" ; // No flowcell ID as indicator for no flowcell data
+	Note note ( "mlwh.iseq_flowcell/mlwh.iseq_product_metrics" , "Importing missing flowcell data from MLWH, using run/lane/tag/MLWH sample" ) ;
+	SQLresult r ;
+	SQLmap datamap ;
+	query ( dab.ft , r , sql ) ;
+	while ( r.getMap(datamap) ) {
+		string fits_file_id = datamap["id"].asString() ;
+		sql = "SELECT id," ;
+		sql += "SELECT `value` FROM file2tag WHERE file_id=file.id AND tag_id=3578 LIMIT 1) AS run," ;
+		sql += "(SELECT `value` FROM file2tag WHERE file_id=file.id AND tag_id=3571 LIMIT 1) AS lane," ;
+		sql += "(SELECT `value` FROM file2tag WHERE file_id=file.id AND tag_id=3569 LIMIT 1) AS tag_id," ;
+		sql += "(SELECT sample_id FROM sample2file WHERE file_id=file.id LIMIT 1) AS sample_id" ;
+		sql += " FROM file WHERE id=" + fits_file_id ;
+		SQLresult r2 ;
+		SQLmap datamap2 ;
+		query ( dab.ft , r2 , sql2 ) ;
+		if ( r.getMap(datamap) ) {
+			string run = datamap2["run"].asString() ;
+			string lane = datamap2["lane"].asString() ;
+			string fits_sample_id = datamap2["sample_id"].asString() ;
+			string tag_index ;
+			if ( !datamap2["tag_id"].isNull() ) tag_index = datamap2["tag_id"].asString() ;
+			addMissingFileMetadataFlowcellByRLTS ( run , lane , tag_index , fits_sample_id ) ;
+		}
+	}
+}
+
+void UpdateSanger::addMissingFileMetadataFlowcellByRLTS ( string run , string lane , string tag_index , string fits_sample_id ) {
+	cout << run << "\t" << lane << "\t" << tag_id << "\t" << fits_sample_id << endl ;
+	if ( run.empty() || lane.empty() || fits_sample_id.empty() ) return ;
+	if ( run == "null" || lane == "null" || fits_sample_id == "null" ) return ;
+	string sql = "SELECT iseq_flowcell.* FROM iseq_flowcell,iseq_product_metrics" ;
+	sql += " WHERE iseq_flowcell.id_iseq_flowcell_tmp=iseq_product_metrics.id_iseq_flowcell_tmp" ;
+	sql += " AND id_run=" + run ;
+	sql += " AND iseq_product_metrics.position=" + lane ;
+	if ( !tag_index.empty() ) sql += " AND iseq_product_metrics.tag_index=" + tag_index ;
+
+cout << sql << endl ; return ; // TESTING FIXME
+	Note note ( "mlwh.iseq_flowcell/mlwh.iseq_product_metrics" , "Importing missing flowcell data from MLWH, using run/lane/tag/MLWH sample" ) ;
+	SQLresult r ;
+	SQLmap datamap ;
+	query ( dab.ft , r , sql ) ;
+	while ( r.getMap(datamap) ) {
 	}
 }
 
