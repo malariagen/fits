@@ -14,7 +14,6 @@ void UpdateSanger::updateFromMLWH () {
 }
 
 void UpdateSanger::updateFromMLWHandSubtrack () {
-addMissingFileMetadataFlowcell() ; exit(0) ; // TESTING FIXME
 	vector <string> id_study_tmp = getOurMLWHstudies() ;
 	createMissingMLWHSamplesForStudies ( id_study_tmp ) ; // Creates missing samples in FITS with metadata, including LIMS ID, which we then use to match files from Subtrack
 	createMissingFilesFromSubtrack ( id_study_tmp ) ; // Create missing fimes from Subtrack in FITS, and add metadata
@@ -40,7 +39,7 @@ void UpdateSanger::createMissingFilesFromSubtrack ( vector <string> &id_study_tm
 		{ "run" , "F:3578" } ,
 		{ "lane" , "F:3571" } ,
 		{ "mux" , "F:3569" } ,
-		{ "file_name" , "F:3607" } ,
+		{ "file_name" , "" } ,
 		{ "study_id" , "B:3593" } ,
 		{ "sample_id" , "B:3585" } ,
 		{ "for_release" , "" } , // 3580 Y=>1; see code below
@@ -60,7 +59,7 @@ void UpdateSanger::createMissingFilesFromSubtrack ( vector <string> &id_study_tm
 		{ "library_type" , "" } ,
 		{ "ae_sub_acc" , "" } ,
 		{ "tech" , "" } ,
-		{ "file_filename" , "" } ,
+		{ "file_filename" , "F:3607" } ,
 		{ "MD5" , "F:7" } ,
 		{ "bytes" , "F:3609" } ,
 		{ "file_ts" , "F:347" } } ;
@@ -214,7 +213,7 @@ void UpdateSanger::addMissingFileMetadataFileSize () {
 }
 
 void UpdateSanger::addMissingFileMetadataFlowcell () {
-	string sql = "SELECT * FROM file WHERE id NOT IN (SELECT file_id FROM file2tag WHERE tag_id=3570)" ; // No flowcell ID as indicator for no flowcell data
+	string sql = "SELECT * FROM file WHERE storage=1 AND id NOT IN (SELECT file_id FROM file2tag WHERE tag_id=3570)" ; // No flowcell ID as indicator for no flowcell data
 	Note note ( "mlwh.iseq_flowcell/mlwh.iseq_product_metrics" , "Importing missing flowcell data from MLWH, using run/lane/tag/MLWH sample" ) ;
 	SQLresult r ;
 	SQLmap datamap ;
@@ -222,42 +221,146 @@ void UpdateSanger::addMissingFileMetadataFlowcell () {
 	while ( r.getMap(datamap) ) {
 		string fits_file_id = datamap["id"].asString() ;
 		sql = "SELECT id," ;
-		sql += "SELECT `value` FROM file2tag WHERE file_id=file.id AND tag_id=3578 LIMIT 1) AS run," ;
+		sql += "(SELECT `value` FROM file2tag WHERE file_id=file.id AND tag_id=3578 LIMIT 1) AS run," ;
 		sql += "(SELECT `value` FROM file2tag WHERE file_id=file.id AND tag_id=3571 LIMIT 1) AS lane," ;
 		sql += "(SELECT `value` FROM file2tag WHERE file_id=file.id AND tag_id=3569 LIMIT 1) AS tag_id," ;
 		sql += "(SELECT sample_id FROM sample2file WHERE file_id=file.id LIMIT 1) AS sample_id" ;
 		sql += " FROM file WHERE id=" + fits_file_id ;
 		SQLresult r2 ;
 		SQLmap datamap2 ;
-		query ( dab.ft , r2 , sql2 ) ;
-		if ( r.getMap(datamap) ) {
+		query ( dab.ft , r2 , sql ) ;
+		if ( r2.getMap(datamap2) ) {
 			string run = datamap2["run"].asString() ;
 			string lane = datamap2["lane"].asString() ;
 			string fits_sample_id = datamap2["sample_id"].asString() ;
 			string tag_index ;
 			if ( !datamap2["tag_id"].isNull() ) tag_index = datamap2["tag_id"].asString() ;
-			addMissingFileMetadataFlowcellByRLTS ( run , lane , tag_index , fits_sample_id ) ;
+			addMissingFileMetadataFlowcellByRLTS ( run , lane , tag_index , fits_sample_id , fits_file_id ) ;
+			addMissingFileMetadataRunLaneMetricsByRL ( run , lane , fits_file_id ) ;
 		}
 	}
 }
 
-void UpdateSanger::addMissingFileMetadataFlowcellByRLTS ( string run , string lane , string tag_index , string fits_sample_id ) {
-	cout << run << "\t" << lane << "\t" << tag_id << "\t" << fits_sample_id << endl ;
+void UpdateSanger::addMissingFileMetadataRunLaneMetricsByRL ( string run , string lane , string fits_file_id ) {
+	if ( run.empty() || lane.empty() ) return ;
+	if ( !isNumeric(run) || !isNumeric(lane) ) return ;
+	string sql = "SELECT * FROM iseq_run_lane_metrics" ;
+	sql += " WHERE id_run=" + run ;
+	sql += " AND position=" + lane ;
+
+	Note note ( "mlwh.iseq_run_lane_metrics" , "Importing missing flowcell data from MLWH, using run/lane" ) ;
+	SQLresult r ;
+	SQLmap datamap ;
+	query ( mlwh , r , sql ) ;
+	uint32_t cnt = 0 ;
+	while ( r.getMap(datamap) ) cnt++ ;
+	if ( cnt != 1 ) {
+		cout << cnt << " results for run/lane/file:\t" << run << "\t" << lane << "\t" << fits_file_id << endl ;
+		return ;
+	}
+
+	// Could load that from `tag` table
+	TField2Tag field2tag = {
+		{ "flowcell_barcode" , "" } ,
+		{ "id_run" , "" } ,
+		{ "position" , "" } ,
+		{ "instrument_name" , "F:3596" } ,
+		{ "instrument_model" , "F:3597" } ,
+		{ "paired_read" , "F:3584" } ,
+		{ "cycles" , "" } ,
+		{ "cancelled" , "" } ,
+		{ "run_pending" , "" } ,
+		{ "run_complete" , "F:3598" } ,
+		{ "qc_complete" , "F:3599" } ,
+		{ "pf_cluster_count" , "" } ,
+		{ "raw_cluster_count" , "" } ,
+		{ "raw_cluster_density" , "" } ,
+		{ "pf_cluster_density" , "" } ,
+		{ "pf_bases" , "" } ,
+		{ "q20_yield_kb_forward_read" , "" } ,
+		{ "q20_yield_kb_reverse_read" , "" } ,
+		{ "q30_yield_kb_forward_read" , "" } ,
+		{ "q30_yield_kb_reverse_read" , "" } ,
+		{ "q40_yield_kb_forward_read" , "" } ,
+		{ "q40_yield_kb_reverse_read" , "" } ,
+		{ "tags_decode_percent" , "" } ,
+		{ "tags_decode_cv" , "" } ,
+		{ "unexpected_tags_percent" , "" } ,
+		{ "tag_hops_percent" , "" } ,
+		{ "tag_hops_power" , "" } ,
+		{ "run_priority" , "" }
+	} ;
+	updateMetadataInFITS ( "" , fits_file_id , field2tag , datamap , note ) ;
+}
+
+void UpdateSanger::addMissingFileMetadataFlowcellByRLTS ( string run , string lane , string tag_index , string fits_sample_id , string fits_file_id ) {
 	if ( run.empty() || lane.empty() || fits_sample_id.empty() ) return ;
-	if ( run == "null" || lane == "null" || fits_sample_id == "null" ) return ;
-	string sql = "SELECT iseq_flowcell.* FROM iseq_flowcell,iseq_product_metrics" ;
+	if ( !isNumeric(run) || !isNumeric(lane) || !isNumeric(fits_sample_id) ) return ;
+	string sql = "SELECT iseq_flowcell.*,iseq_product_metrics.id_run" ;
+	sql += " FROM iseq_flowcell,iseq_product_metrics" ;
 	sql += " WHERE iseq_flowcell.id_iseq_flowcell_tmp=iseq_product_metrics.id_iseq_flowcell_tmp" ;
 	sql += " AND id_run=" + run ;
 	sql += " AND iseq_product_metrics.position=" + lane ;
-	if ( !tag_index.empty() ) sql += " AND iseq_product_metrics.tag_index=" + tag_index ;
+	if ( !tag_index.empty() ) {
+		if ( !isNumeric(tag_index) ) return ;
+		sql += " AND iseq_product_metrics.tag_index=" + tag_index ;
+	}
 
-cout << sql << endl ; return ; // TESTING FIXME
 	Note note ( "mlwh.iseq_flowcell/mlwh.iseq_product_metrics" , "Importing missing flowcell data from MLWH, using run/lane/tag/MLWH sample" ) ;
 	SQLresult r ;
 	SQLmap datamap ;
-	query ( dab.ft , r , sql ) ;
-	while ( r.getMap(datamap) ) {
+	query ( mlwh , r , sql ) ;
+	uint32_t cnt = 0 ;
+	while ( r.getMap(datamap) ) cnt++ ;
+	if ( cnt != 1 ) {
+//		cout << cnt << " results for run/lane/tag/sample/file:\t" << run << "\t" << lane << "\t" << tag_index << "\t" << fits_sample_id << "\t" << fits_file_id << endl ;
+		return ;
 	}
+
+	// Could load that from `tag` table
+	TField2Tag field2tag = {
+		{ "id_iseq_flowcell_tmp" , "" } ,
+		{ "last_updated" , "" } ,
+		{ "recorded_at" , "" } ,
+		{ "id_sample_tmp" , "" } ,
+		{ "id_study_tmp" , "" } ,
+		{ "cost_code" , "" } ,
+		{ "is_r_and_d" , "F:3582" } ,
+		{ "id_lims" , "" } ,
+		{ "priority" , "" } ,
+		{ "manual_qc" , "F:3581" } ,
+		{ "external_release" , "F:3580" } ,
+		{ "flowcell_barcode" , "" } ,
+		{ "id_flowcell_lims" , "F:3570" } ,
+		{ "position" , "F:3571" } ,
+		{ "entity_type" , "" } ,
+		{ "entity_id_lims" , "" } ,
+		{ "tag_index" , "F:3569" } ,
+		{ "tag_sequence" , "" } ,
+		{ "tag_set_id_lims" , "" } ,
+		{ "tag_set_name" , "" } ,
+		{ "tag_identifier" , "" } ,
+		{ "tag2_sequence" , "" } ,
+		{ "tag2_set_id_lims" , "" } ,
+		{ "tag2_set_name" , "" } ,
+		{ "tag2_identifier" , "" } ,
+		{ "is_spiked" , "" } ,
+		{ "pipeline_id_lims" , "" } ,
+		{ "bait_name" , "" } ,
+		{ "requested_insert_size_from" , "F:3564" } ,
+		{ "requested_insert_size_to" , "F:3565" } ,
+		{ "forward_read_length" , "F:3566" } ,
+		{ "reverse_read_length" , "F:3568" } ,
+		{ "id_pool_lims" , "" } ,
+		{ "legacy_library_id" , "F:3613" } ,
+		{ "id_library_lims" , "F:3614" } ,
+		{ "team" , "" } ,
+		{ "purpose" , "" } ,
+		{ "suboptimal" , "" } ,
+		{ "primer_panel" , "" } ,
+		{ "id_run" , "F:3578" }
+	} ;
+	updateMetadataInFITS ( fits_sample_id , fits_file_id , field2tag , datamap , note ) ;
 }
 
 void UpdateSanger::getSampleMapSequenscapeToFITS ( map <string,string> &sample_lims2fits ) {

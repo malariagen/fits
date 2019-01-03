@@ -31,7 +31,7 @@ bool StringTools::isNumeric ( string s ) {
     for ( auto c:s ) {
         if ( c<'0' || c>'9' ) return false ;
     }
-    return true ;
+    return !s.empty() ;
 }
 
 string StringTools::exec(string cmd) {

@@ -48,7 +48,8 @@ protected:
 	void addMissingFileMetadataFileType () ;
 	void addMissingFileMetadataFileSize () ;
 	void addMissingFileMetadataFlowcell () ;
-	void addMissingFileMetadataFlowcellByRLTS ( string run , string lane , string tag_index , string fits_sample_id ) ;
+	void addMissingFileMetadataFlowcellByRLTS ( string run , string lane , string tag_index , string fits_sample_id , string fits_file_id ) ;
+	void addMissingFileMetadataRunLaneMetricsByRL ( string run , string lane , string fits_file_id ) ;
 
 	vector <string> queryFirstColumn ( MysqlDatabase &db , string sql ) ;
 	void query ( MysqlDatabase &db , SQLresult &r , string sql ) ;
