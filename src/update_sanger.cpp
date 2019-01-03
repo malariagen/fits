@@ -73,7 +73,6 @@ void UpdateSanger::createMissingFilesFromSubtrack ( vector <string> &id_study_tm
 		string file_name = datamap["file_filename"].asString() ;
 		string full_path = "/seq/" + datamap["run"].asString() + "/" + file_name ;
 		if ( !shouldWeAddThisFile ( file_name , full_path ) ) continue ;
-//cout << "Trying " << full_path << endl ;
 
 		// Get FITS sample ID for Sequenscape LIMS sample ID
 		string sample_lims_id = datamap["sample_id"].asString() ; // Sequenscape LIMS sample ID
@@ -82,11 +81,9 @@ void UpdateSanger::createMissingFilesFromSubtrack ( vector <string> &id_study_tm
 			continue ;
 		}
 		string fits_sample_id = sample_lims2fits[sample_lims_id] ;
-//cout << "FITS sample ID " << fits_sample_id << endl ;
 
 		// Get or create entry in FITS file table
 		string fits_file_id = i2s ( dab.getOrCreateFileID ( full_path , file_name , 1 , note ) ) ;
-//cout << "FITS sample ID " << fits_sample_id << endl ;
 
 		// Link sample to file
 		dab.setSampleFile ( s2i(fits_sample_id) , s2i(fits_file_id) , note ) ;
@@ -99,11 +96,29 @@ void UpdateSanger::createMissingFilesFromSubtrack ( vector <string> &id_study_tm
 		if ( datamap["qc"].asString() == "Y" ) dab.setFileTag ( fits_file_id , "3581" , "1" , note ) ;
 	}
 
-	// TODO
 	dab.setKV ( "last_import_from_subtrack_submission" , last_import_from_subtrack_submission ) ;
 	dab.setKV ( "last_import_from_subtrack_files" , last_import_from_subtrack_files ) ;
+
+	// Cleanup
+	addMissingFileMetadata() ;
 }
 
+void UpdateSanger::addMissingFileMetadata () {
+	// File type
+	string sql = "SELECT * FROM file WHERE id NOT IN (SELECT file_id FROM file2tag WHERE tag_id=3576)" ;
+	Note note ( "fits.file.full_path" , "Adding tag for convenience" ) ;
+	SQLresult r ;
+	SQLmap datamap ;
+	query ( dab.ft , r , sql ) ;
+	while ( r.getMap(datamap) ) {
+		string fits_file_id = datamap["id"].asString() ;
+		string full_path = datamap["full_path"].asString() ;
+		vector <string> parts = split ( full_path , '.' ) ;
+		string file_type = parts[parts.size()-1] ;
+		std::transform(file_type.begin(), file_type.end(), file_type.begin(), ::tolower);
+		dab.setFileTag ( fits_file_id , "3576" , file_type , note ) ;
+	}
+}
 
 // Creates new FITS samples for MLWH samples in our studies
 // Adds metadata to new/existing FITS samples
@@ -187,10 +202,8 @@ void UpdateSanger::getSampleMapSequenscapeToFITS ( map <string,string> &sample_l
 void UpdateSanger::updateMetadataInFITS ( string fits_sample_id , string fits_file_id , const TField2Tag &field2tag , SQLmap &datamap , Note &note ) {
 	for ( auto f2t : field2tag ) { // f2t = { field_name , tag_id }
 		if ( f2t.second.empty() ) continue ; // No tag ID specified
-//cout << "TRYING " << f2t.first << " => " << f2t.second << endl ;
 		if ( datamap.find(f2t.first) == datamap.end() ) continue ; // result does not contain this field name
 		if ( datamap[f2t.first].isNull() ) continue ; // Don't set NULL
-//cout << "Not null..." << endl ;
 
 		bool do_update_sample = !fits_sample_id.empty() ;
 		bool do_update_file = !fits_file_id.empty() ;
@@ -206,8 +219,7 @@ void UpdateSanger::updateMetadataInFITS ( string fits_sample_id , string fits_fi
 
 		if ( do_update_sample && fits_sample_id.empty() ) die ( "UpdateSanger::updateMetadataInFITS : Forcing sample for "+tag_id+" but fits_sample_id is empty" ) ;
 		if ( do_update_file && fits_file_id.empty() ) die ( "UpdateSanger::updateMetadataInFITS : Forcing file for "+tag_id+" but fits_file_id is empty" ) ;
-//cout << tag_id << " : '" << value << "'" << endl ;
-//cout << do_update_sample << "/" << do_update_file << " / " << fits_sample_id << " / " << fits_file_id << endl ;
+
 		if ( do_update_sample ) dab.setSampleTag ( fits_sample_id , tag_id , value , note ) ;
 		if ( do_update_file ) dab.setFileTag ( fits_file_id , tag_id , value , note ) ;
 	}

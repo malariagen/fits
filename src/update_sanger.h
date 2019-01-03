@@ -44,6 +44,7 @@ protected:
 	void createMissingFilesFromSubtrack ( vector <string> &id_study_tmp ) ;
 	void updateMetadataInFITS ( string fits_sample_id , string fits_file_id , const TField2Tag &field2tag , SQLmap &datamap , Note &note ) ;
 	void getSampleMapSequenscapeToFITS ( map <string,string> &sample_lims2fits ) ;
+	void addMissingFileMetadata () ;
 
 	vector <string> queryFirstColumn ( MysqlDatabase &db , string sql ) ;
 	void query ( MysqlDatabase &db , SQLresult &r , string sql ) ;
