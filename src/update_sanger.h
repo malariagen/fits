@@ -41,6 +41,7 @@ protected:
 	void updateFromMLWHandSubtrack () ;
 	vector <string> MLWHstudies2limsStudies ( vector <string> &id_study_tmp ) ;
 	void createMissingMLWHSamplesForStudies (  vector <string> &id_study_tmp ) ;
+	void createMissingFilesFromSubtrack ( vector <string> &id_study_tmp ) ;
 	void updateMetadataInFITS ( string fits_sample_id , string fits_file_id , const TField2Tag &field2tag , SQLmap &datamap , Note &note ) ;
 	void getSampleMapSequenscapeToFITS ( map <string,string> &sample_lims2fits ) ;
 

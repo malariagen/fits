@@ -15,8 +15,11 @@ void UpdateSanger::updateFromMLWH () {
 
 void UpdateSanger::updateFromMLWHandSubtrack () {
 	vector <string> id_study_tmp = getOurMLWHstudies() ;
-// TESTING FIXME
-//	createMissingMLWHSamplesForStudies ( id_study_tmp ) ; // Creates missing samples in FITS with metadata, including LIMS ID, which we then use to match files from Subtrack
+	createMissingMLWHSamplesForStudies ( id_study_tmp ) ; // Creates missing samples in FITS with metadata, including LIMS ID, which we then use to match files from Subtrack
+	createMissingFilesFromSubtrack ( id_study_tmp ) ; // Create missing fimes from Subtrack in FITS, and add metadata
+}
+
+void UpdateSanger::createMissingFilesFromSubtrack ( vector <string> &id_study_tmp ) {
 	vector <string> id_study_lims = MLWHstudies2limsStudies ( id_study_tmp ) ; // Subtrack only knows about LIMS (=sequenscape) study IDs
 	string lims_study_list = implode(id_study_lims,false) ; // DB safe, all numeric
 

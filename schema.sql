@@ -94,7 +94,7 @@ CREATE TABLE `id_iseq_flowcell_tmp_no_file` (
 
 CREATE TABLE `kv` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `kv_key` varchar(32) NOT NULL DEFAULT '',
+  `kv_key` varchar(128) NOT NULL DEFAULT '',
   `kv_value` varchar(255) NOT NULL DEFAULT '',
   PRIMARY KEY (`id`),
   UNIQUE KEY `kv_key` (`kv_key`)
