@@ -92,6 +92,7 @@ void UpdateSanger::createMissingFilesFromSubtrack ( vector <string> &id_study_tm
 		updateMetadataInFITS ( fits_sample_id , fits_file_id , field2tag , datamap , note ) ;
 
 		// Complex metadata
+		dab.setFileTag ( fits_file_id , "1" , "" , note ) ; // Storage: iRODs
 		if ( datamap["for_release"].asString() == "Y" ) dab.setFileTag ( fits_file_id , "3580" , "1" , note ) ;
 		if ( datamap["qc"].asString() == "Y" ) dab.setFileTag ( fits_file_id , "3581" , "1" , note ) ;
 
@@ -105,23 +106,6 @@ void UpdateSanger::createMissingFilesFromSubtrack ( vector <string> &id_study_tm
 
 	// Cleanup
 	addMissingFileMetadata() ;
-}
-
-void UpdateSanger::addMissingFileMetadata () {
-	// File type
-	string sql = "SELECT * FROM file WHERE id NOT IN (SELECT file_id FROM file2tag WHERE tag_id=3576)" ;
-	Note note ( "fits.file.full_path" , "Adding tag for convenience" ) ;
-	SQLresult r ;
-	SQLmap datamap ;
-	query ( dab.ft , r , sql ) ;
-	while ( r.getMap(datamap) ) {
-		string fits_file_id = datamap["id"].asString() ;
-		string full_path = datamap["full_path"].asString() ;
-		vector <string> parts = split ( full_path , '.' ) ;
-		string file_type = parts[parts.size()-1] ;
-		std::transform(file_type.begin(), file_type.end(), file_type.begin(), ::tolower);
-		dab.setFileTag ( fits_file_id , "3576" , file_type , note ) ;
-	}
 }
 
 // Creates new FITS samples for MLWH samples in our studies
@@ -190,6 +174,41 @@ void UpdateSanger::createMissingMLWHSamplesForStudies (  vector <string> &id_stu
 	}
 
 	dab.setKV ( "last_import_from_mlwh_sample" , last_import_from_mlwh_sample ) ;
+}
+
+
+void UpdateSanger::addMissingFileMetadata () {
+	addMissingFileMetadataFileType() ;
+	addMissingFileMetadataFileSize() ;
+}
+
+void UpdateSanger::addMissingFileMetadataFileType () {
+	string sql = "SELECT * FROM file WHERE id NOT IN (SELECT file_id FROM file2tag WHERE tag_id=3576)" ;
+	Note note ( "fits.file.full_path" , "Adding tag for convenience" ) ;
+	SQLresult r ;
+	SQLmap datamap ;
+	query ( dab.ft , r , sql ) ;
+	while ( r.getMap(datamap) ) {
+		string fits_file_id = datamap["id"].asString() ;
+		string full_path = datamap["full_path"].asString() ;
+		vector <string> parts = split ( full_path , '.' ) ;
+		string file_type = parts[parts.size()-1] ;
+		std::transform(file_type.begin(), file_type.end(), file_type.begin(), ::tolower);
+		dab.setFileTag ( fits_file_id , "3576" , file_type , note ) ;
+	}
+}
+
+void UpdateSanger::addMissingFileMetadataFileSize () {
+	string sql = "SELECT * FROM file2tag WHERE tag_id=3609 AND file_id NOT IN (select file_id FROM file2tag WHERE tag_id=8)" ;
+	Note note ( "fits.file2tag" , "Importing missing file size (tag 8) from Subtrack (tag 3609)" ) ;
+	SQLresult r ;
+	SQLmap datamap ;
+	query ( dab.ft , r , sql ) ;
+	while ( r.getMap(datamap) ) {
+		string fits_file_id = datamap["file_id"].asString() ;
+		string file_size = datamap["value"].asString() ;
+		dab.setFileTag ( fits_file_id , "8" , file_size , note ) ;
+	}
 }
 
 void UpdateSanger::getSampleMapSequenscapeToFITS ( map <string,string> &sample_lims2fits ) {
