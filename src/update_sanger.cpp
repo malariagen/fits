@@ -1,6 +1,8 @@
 #include <algorithm>
+#include <iostream>
+#include <fstream>
+#include <sstream>
 #include "update_sanger.h"
-#include "json.hpp"
 
 using namespace std ;
 using json = nlohmann::json;
@@ -14,6 +16,10 @@ void UpdateSanger::updateFromMLWH () {
 }
 
 void UpdateSanger::updateFromMLWHandSubtrack () {
+	// load config file
+	ifstream ifs ( "subtrack2fits.json" , std::ifstream::in ) ;
+	ifs >> subtrack2fits ;
+
 	vector <string> id_study_tmp = getOurMLWHstudies() ;
 	createMissingMLWHSamplesForStudies ( id_study_tmp ) ; // Creates missing samples in FITS with metadata, including LIMS ID, which we then use to match files from Subtrack
 	createMissingFilesFromSubtrack ( id_study_tmp ) ; // Create missing fimes from Subtrack in FITS, and add metadata
@@ -34,37 +40,6 @@ void UpdateSanger::createMissingFilesFromSubtrack ( vector <string> &id_study_tm
 	string sql = "SELECT submission.*,files.file_name AS file_filename,MD5,bytes,files.timestamp AS file_ts FROM submission,files " ;
 	sql += " WHERE sub_id=submission.id AND study_id IN (" + lims_study_list + ")" ;
 	sql += " AND (submission.timestamp>=" + subtrack.quote(last_import_from_subtrack_submission) + " OR files.timestamp>=" + subtrack.quote(last_import_from_subtrack_files) + ")" ;
-
-	TField2Tag field2tag = {
-		{ "id" , "F:3608" } ,
-		{ "run" , "F:3578" } ,
-		{ "lane" , "F:3571" } ,
-		{ "mux" , "F:3569" } ,
-		{ "file_name" , "" } ,
-		{ "study_id" , "B:3593" } ,
-		{ "sample_id" , "B:3585" } ,
-		{ "for_release" , "" } , // 3580 Y=>1; see code below
-		{ "qc" , "" } , // 3581 Y=>1; see code below
-		{ "created" , "" } ,
-		{ "release_date" , "" } ,
-		{ "ext_db" , "" } ,
-		{ "ebi_sub_acc" , "F:3610" } ,
-		{ "ebi_study_acc" , "F:3611" } ,
-		{ "ebi_exp_acc" , "F:3612" } ,
-		{ "ebi_run_acc" , "F:3602" } ,
-		{ "ebi_sample_acc" , "B:3587" } ,
-		{ "timestamp" , "" } ,
-		{ "rel_now" , "" } ,
-		{ "human_screen" , "" } ,
-		{ "manager" , "" } ,
-		{ "library_type" , "" } , // NOT 3592!
-		{ "ae_sub_acc" , "" } ,
-		{ "tech" , "" } ,
-		{ "file_filename" , "F:3607" } ,
-		{ "MD5" , "F:7" } ,
-		{ "bytes" , "F:3609" } ,
-		{ "file_ts" , "F:347" } } ;
-
 	Note note ( "subtrack.submission/subtrack.files" , "Imported from Subtrack in method 'UpdateSanger::updateFromMLWHandSubtrack'" ) ;
 	SQLresult r ;
 	SQLmap datamap ;
@@ -90,7 +65,7 @@ void UpdateSanger::createMissingFilesFromSubtrack ( vector <string> &id_study_tm
 		dab.setSampleFile ( s2i(fits_sample_id) , s2i(fits_file_id) , note ) ;
 
 		// Import metadata
-		updateMetadataInFITS ( fits_sample_id , fits_file_id , field2tag , datamap , note ) ;
+		updateMetadataInFITS ( fits_sample_id , fits_file_id , "submission_files" , datamap , note ) ;
 
 		// Complex metadata
 		dab.setFileTag ( fits_file_id , "1" , "" , note ) ; // Storage: iRODs
@@ -118,42 +93,6 @@ void UpdateSanger::createMissingMLWHSamplesForStudies (  vector <string> &id_stu
 	string sql = "SELECT * FROM `sample` WHERE `id_sample_tmp` IN (SELECT DISTINCT `id_sample_tmp` FROM `iseq_flowcell` WHERE `id_study_tmp` IN ("+mlwh_study_list+"))" ;
 	sql += " AND `last_updated`>=" + mlwh.quote(last_import_from_mlwh_sample) ;
 
-	TField2Tag field2tag = {
-		{ "id_sample_tmp" , "1362" } ,
-		{ "id_lims" , "3618" } ,
-		{ "uuid_sample_lims" , "" } ,
-		{ "id_sample_lims" , "3585" } ,
-		{ "last_updated" , "" } ,
-		{ "recorded_at" , "" } ,
-		{ "deleted_at" , "" } ,
-		{ "created" , "" } ,
-		{ "name" , "3586" } ,
-		{ "reference_genome" , "3619" } ,
-		{ "organism" , "3620" } ,
-		{ "accession_number" , "3587" } ,
-		{ "common_name" , "3591" } ,
-		{ "description" , "" } ,
-		{ "taxon_id" , "3600" } ,
-		{ "father" , "" } ,
-		{ "mother" , "" } ,
-		{ "replicate" , "" } ,
-		{ "ethnicity" , "" } ,
-		{ "gender" , "" } ,
-		{ "cohort" , "" } ,
-		{ "country_of_origin" , "" } ,
-		{ "geographical_region" , "" } ,
-		{ "sanger_sample_id" , "" } , // Similar/equal to name?
-		{ "control" , "" } ,
-		{ "supplier_name" , "3589" } ,
-		{ "public_name" , "" } ,
-		{ "sample_visibility" , "" } ,
-		{ "strain" , "" } ,
-		{ "consent_withdrawn" , "" } ,
-		{ "donor_id" , "" } ,
-		{ "phenotype" , "" } ,
-		{ "developmental_stage" , "" }
-	} ;
-
 	Note note ( "mlwh.sample" , "Imported from MLWH in method 'UpdateSanger::createMissingMLWHSamplesForStudies'" ) ;
 	SQLresult r ;
 	SQLmap datamap ;
@@ -168,7 +107,7 @@ void UpdateSanger::createMissingMLWHSamplesForStudies (  vector <string> &id_stu
 		}
 		if ( fits_sample_id.empty() ) fits_sample_id = dab.createNewSample ( "MLWH sample #"+mlwh_sample_id , note ) ;
 		if ( fits_sample_id.empty() ) die ( "Could not find/create FITS sample for MLWH " + mlwh_sample_id + ", aborting import!" ) ;
-		updateMetadataInFITS ( fits_sample_id , "" , field2tag , datamap , note ) ;
+		updateMetadataInFITS ( fits_sample_id , "" , "mlwh_sample" , datamap , note ) ;
 
 		string last_updated = datamap["last_updated"].asString() ;
 		if ( last_import_from_mlwh_sample < last_updated ) last_import_from_mlwh_sample = last_updated ;
@@ -180,57 +119,33 @@ void UpdateSanger::createMissingMLWHSamplesForStudies (  vector <string> &id_stu
 }
 
 void UpdateSanger::addMissingSampleMetadata () {
+	addMissingSampleMetadataMLWHforLIMS() ;
 	addMissingSampleMetadataStudyIDs() ;
 }
 
+void UpdateSanger::addMissingSampleMetadataMLWHforLIMS () {
+	Note note ( "mlwh.sample" , "Adding sample IDs for MLWH, via Sequenscape sample ID" ) ;
+	string sql = "SELECT sample_id,value FROM sample2tag WHERE tag_id=3585 AND sample_id NOT IN (SELECT sample_id FROM sample2tag WHERE tag_id=1362)" ;
+	SQLresult r ;
+	SQLmap datamap ;
+	query ( dab.ft , r , sql ) ;
+	while ( r.getMap(datamap) ) {
+		string fits_sample_id = datamap["sample_id"].asString() ;
+		string sequenscape_sample_id = datamap["value"].asString() ;
+		if ( !isNumeric(sequenscape_sample_id) ) continue ; // Paranoia
+		sql = "SELECT * FROM sample WHERE id_sample_lims=" + sequenscape_sample_id ;
+		SQLresult r2 ;
+		SQLmap datamap2 ;
+		query ( mlwh , r2 , sql ) ;
+		while ( r2.getMap(datamap2) ) {
+			updateMetadataInFITS ( fits_sample_id , "" , "mlwh_sample" , datamap2 , note ) ;
+		}
+	}
+}
+
 void UpdateSanger::addMissingSampleMetadataStudyIDs () {
-	// Add study IDs to samples with missing MLWH study ID but with MLWH sample ID
+	Note note ( "mlwh.iseq_flowcell/mlwh.study" , "Adding study IDs from MLWH, via MLWH sample ID" ) ;
 	string sql = "SELECT sample_id,value FROM sample2tag WHERE tag_id=1362 AND sample_id NOT IN (SELECT sample_id FROM sample2tag WHERE tag_id=3560)" ;
-	Note note ( "mlwh.iseq_flowcell/mlwh.study" , "Adding study IDs from MLWH" ) ;
-
-	TField2Tag field2tag = {
-		{ "id_study_tmp" , "S:3560" } ,
-		{ "id_lims" , "" } ,
-		{ "uuid_study_lims" , "" } ,
-		{ "id_study_lims" , "S:3593" } ,
-		{ "last_updated" , "" } ,
-		{ "recorded_at" , "" } ,
-		{ "deleted_at" , "" } ,
-		{ "created" , "" } ,
-		{ "name" , "S:3594" } ,
-		{ "reference_genome" , "" } ,
-		{ "ethically_approved" , "" } ,
-		{ "faculty_sponsor" , "" } ,
-		{ "state" , "" } ,
-		{ "study_type" , "" } ,
-		{ "abstract" , "" } ,
-		{ "abbreviation" , "" } ,
-		{ "accession_number" , "S:3611" } ,
-		{ "description" , "" } ,
-		{ "contains_human_dna" , "" } ,
-		{ "contaminated_human_dna" , "" } ,
-		{ "data_release_strategy" , "" } ,
-		{ "data_release_sort_of_study" , "" } ,
-		{ "ena_project_id" , "" } ,
-		{ "study_title" , "" } ,
-		{ "study_visibility" , "" } ,
-		{ "ega_dac_accession_number" , "" } ,
-		{ "array_express_accession_number" , "" } ,
-		{ "ega_policy_accession_number" , "" } ,
-		{ "data_release_timing" , "" } ,
-		{ "data_release_delay_period" , "" } ,
-		{ "data_release_delay_reason" , "" } ,
-		{ "remove_x_and_autosomes" , "" } ,
-		{ "aligned" , "" } ,
-		{ "separate_y_chromosome_data" , "" } ,
-		{ "data_access_group" , "" } ,
-		{ "prelim_id" , "" } ,
-		{ "hmdmc_number" , "" } ,
-		{ "data_destination" , "" } ,
-		{ "s3_email_list" , "" } ,
-		{ "data_deletion_period" , "" }
-	} ;
-
 	SQLresult r ;
 	SQLmap datamap ;
 	query ( dab.ft , r , sql ) ;
@@ -243,7 +158,7 @@ void UpdateSanger::addMissingSampleMetadataStudyIDs () {
 		SQLmap datamap2 ;
 		query ( mlwh , r2 , sql ) ;
 		while ( r2.getMap(datamap2) ) {
-			updateMetadataInFITS ( fits_sample_id , "" , field2tag , datamap2 , note ) ;
+			updateMetadataInFITS ( fits_sample_id , "" , "mlwh_study" , datamap2 , note ) ;
 		}
 	}
 }
@@ -329,39 +244,7 @@ void UpdateSanger::addMissingFileMetadataRunLaneMetricsByRL ( string run , strin
 		cout << cnt << " results for run/lane/file:\t" << run << "\t" << lane << "\t" << fits_file_id << endl ;
 		return ;
 	}
-
-	// Could load that from `tag` table
-	TField2Tag field2tag = {
-		{ "flowcell_barcode" , "" } ,
-		{ "id_run" , "" } ,
-		{ "position" , "" } ,
-		{ "instrument_name" , "F:3596" } ,
-		{ "instrument_model" , "F:3597" } ,
-		{ "paired_read" , "F:3584" } ,
-		{ "cycles" , "" } ,
-		{ "cancelled" , "" } ,
-		{ "run_pending" , "" } ,
-		{ "run_complete" , "F:3598" } ,
-		{ "qc_complete" , "F:3599" } ,
-		{ "pf_cluster_count" , "" } ,
-		{ "raw_cluster_count" , "" } ,
-		{ "raw_cluster_density" , "" } ,
-		{ "pf_cluster_density" , "" } ,
-		{ "pf_bases" , "" } ,
-		{ "q20_yield_kb_forward_read" , "" } ,
-		{ "q20_yield_kb_reverse_read" , "" } ,
-		{ "q30_yield_kb_forward_read" , "" } ,
-		{ "q30_yield_kb_reverse_read" , "" } ,
-		{ "q40_yield_kb_forward_read" , "" } ,
-		{ "q40_yield_kb_reverse_read" , "" } ,
-		{ "tags_decode_percent" , "" } ,
-		{ "tags_decode_cv" , "" } ,
-		{ "unexpected_tags_percent" , "" } ,
-		{ "tag_hops_percent" , "" } ,
-		{ "tag_hops_power" , "" } ,
-		{ "run_priority" , "" }
-	} ;
-	updateMetadataInFITS ( "" , fits_file_id , field2tag , datamap , note ) ;
+	updateMetadataInFITS ( "" , fits_file_id , "mlwh_metrics" , datamap , note ) ;
 }
 
 void UpdateSanger::addMissingFileMetadataFlowcellByRLTS ( string run , string lane , string tag_index , string fits_sample_id , string fits_file_id ) {
@@ -384,56 +267,11 @@ void UpdateSanger::addMissingFileMetadataFlowcellByRLTS ( string run , string la
 	uint32_t cnt = 0 ;
 	while ( r.getMap(datamap) ) cnt++ ;
 	if ( cnt != 1 ) {
-//		cout << cnt << " results for run/lane/tag/sample/file:\t" << run << "\t" << lane << "\t" << tag_index << "\t" << fits_sample_id << "\t" << fits_file_id << endl ;
+		cout << cnt << " results for run/lane/tag/sample/file:\t" << run << "\t" << lane << "\t" << tag_index << "\t" << fits_sample_id << "\t" << fits_file_id << endl ;
+		cout << sql << endl ;
 		return ;
 	}
-
-	// Could load that from `tag` table
-	TField2Tag field2tag = {
-		{ "id_iseq_flowcell_tmp" , "" } ,
-		{ "last_updated" , "" } ,
-		{ "recorded_at" , "" } ,
-		{ "id_sample_tmp" , "" } ,
-		{ "id_study_tmp" , "" } ,
-		{ "cost_code" , "" } ,
-		{ "is_r_and_d" , "F:3582" } ,
-		{ "id_lims" , "" } ,
-		{ "priority" , "" } ,
-		{ "manual_qc" , "F:3581" } ,
-		{ "external_release" , "F:3580" } ,
-		{ "flowcell_barcode" , "" } ,
-		{ "id_flowcell_lims" , "F:3570" } ,
-		{ "position" , "F:3571" } ,
-		{ "entity_type" , "" } ,
-		{ "entity_id_lims" , "" } ,
-		{ "tag_index" , "F:3569" } ,
-		{ "tag_sequence" , "" } ,
-		{ "tag_set_id_lims" , "" } ,
-		{ "tag_set_name" , "" } ,
-		{ "tag_identifier" , "" } ,
-		{ "tag2_sequence" , "" } ,
-		{ "tag2_set_id_lims" , "" } ,
-		{ "tag2_set_name" , "" } ,
-		{ "tag2_identifier" , "" } ,
-		{ "is_spiked" , "" } ,
-		{ "pipeline_id_lims" , "F:3592" } ,
-		{ "bait_name" , "" } ,
-		{ "requested_insert_size_from" , "F:3564" } ,
-		{ "requested_insert_size_to" , "F:3565" } ,
-		{ "forward_read_length" , "F:3566" } ,
-		{ "reverse_read_length" , "F:3568" } ,
-		{ "id_pool_lims" , "" } ,
-		{ "legacy_library_id" , "F:3613" } ,
-		{ "id_library_lims" , "F:3614" } ,
-		{ "team" , "" } ,
-		{ "purpose" , "" } ,
-		{ "suboptimal" , "" } ,
-		{ "primer_panel" , "" } ,
-		{ "id_run" , "F:3578" } ,
-		{ "num_reads" , "F:3577" } ,
-		{ "human_percent_mapped" , "F:3621" }
-	} ;
-	updateMetadataInFITS ( fits_sample_id , fits_file_id , field2tag , datamap , note ) ;
+	updateMetadataInFITS ( fits_sample_id , fits_file_id , "mlwh_flowcell" , datamap , note ) ;
 }
 
 void UpdateSanger::getSampleMapSequenscapeToFITS ( map <string,string> &sample_lims2fits ) {
@@ -447,16 +285,22 @@ void UpdateSanger::getSampleMapSequenscapeToFITS ( map <string,string> &sample_l
 	}
 }
 
-void UpdateSanger::updateMetadataInFITS ( string fits_sample_id , string fits_file_id , const TField2Tag &field2tag , SQLmap &datamap , Note &note ) {
-	for ( auto f2t : field2tag ) { // f2t = { field_name , tag_id }
-		if ( f2t.second.empty() ) continue ; // No tag ID specified
-		if ( datamap.find(f2t.first) == datamap.end() ) continue ; // result does not contain this field name
-		if ( datamap[f2t.first].isNull() ) continue ; // Don't set NULL
+void UpdateSanger::updateMetadataInFITS ( string fits_sample_id , string fits_file_id , string field2tag , SQLmap &datamap , Note &note ) {
+	if ( subtrack2fits.find(field2tag) == subtrack2fits.end() ) { // Paranoia
+		cerr << "Cannot find key '" << field2tag << "' in subtrack2fits.json config file, aborting" << endl ;
+		exit(1) ;
+	}
+	for ( auto& f2t : subtrack2fits[field2tag].items() ) {
+		string the_key = f2t.key() ;
+		string the_value = f2t.value() ;
+		if ( the_value.empty() ) continue ; // No tag ID specified
+		if ( datamap.find(the_key) == datamap.end() ) continue ; // result does not contain this field name
+		if ( datamap[the_key].isNull() ) continue ; // Don't set NULL
 
 		bool do_update_sample = !fits_sample_id.empty() ;
 		bool do_update_file = !fits_file_id.empty() ;
-		string tag_id = f2t.second ;
-		string value = datamap[f2t.first].asString() ;
+		string tag_id = the_value ;
+		string value = datamap[the_key].asString() ;
 
 		if ( tag_id.size()>2 && tag_id[1] == ':' ) { // Possible prefix pattern: /^[FSB]:/
 			if ( tag_id[0] == 'F' ) { do_update_sample = false ; do_update_file = true ; } // Force update file
@@ -1110,9 +954,11 @@ vector <string> UpdateSanger::getOurMLWHstudies() {
 	vector <string> ret ;
 	ret = queryFirstColumn ( mlwh , "SELECT DISTINCT id_study_tmp FROM study WHERE `faculty_sponsor` like '%Kwiatkowski%'" );
 	ret.push_back ( "2104" ) ; // HARDCODED SEQCAP_WGS_Low_coverage_sequencing_of_the_Woloff_from_Gambia, homo sapiens, Richard Durbin
+	ret.push_back ( "2105" ) ; // HARDCODED SEQCAP_WGS_Low_coverage_sequencing_of_the_Mandinka_from_Gambia, homo sapiens, Richard Durbin
 
 	std::sort ( ret.begin() , ret.end() ) ;
 	std::unique ( ret.begin() , ret.end() ) ;
+//cout << implode(ret,false) << endl ;
 	return ret ;
 }
 

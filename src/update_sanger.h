@@ -3,6 +3,7 @@
 
 #include "tools.h"
 #include "database_abstraction_layer.h"
+#include "json.hpp"
 
 
 class UpdateSanger : public StringTools {
@@ -12,7 +13,7 @@ public:
 	void updatePivotView ( string table ) ;
 
 protected:
-	typedef vector <pair <string,string> > TField2Tag ;
+//	typedef vector <pair <string,string> > TField2Tag ;
 
 	void report ( string s ) ;
 	void die ( string s ) ;
@@ -42,7 +43,7 @@ protected:
 	vector <string> MLWHstudies2limsStudies ( vector <string> &id_study_tmp ) ;
 	void createMissingMLWHSamplesForStudies (  vector <string> &id_study_tmp ) ;
 	void createMissingFilesFromSubtrack ( vector <string> &id_study_tmp ) ;
-	void updateMetadataInFITS ( string fits_sample_id , string fits_file_id , const TField2Tag &field2tag , SQLmap &datamap , Note &note ) ;
+	void updateMetadataInFITS ( string fits_sample_id , string fits_file_id , string field2tag , SQLmap &datamap , Note &note ) ;
 	void getSampleMapSequenscapeToFITS ( map <string,string> &sample_lims2fits ) ;
 	void addMissingFileMetadata () ;
 	void addMissingFileMetadataFileType () ;
@@ -52,12 +53,14 @@ protected:
 	void addMissingFileMetadataRunLaneMetricsByRL ( string run , string lane , string fits_file_id ) ;
 	void addMissingSampleMetadata () ;
 	void addMissingSampleMetadataStudyIDs () ;
+	void addMissingSampleMetadataMLWHforLIMS () ;
 
 	vector <string> queryFirstColumn ( MysqlDatabase &db , string sql ) ;
 	void query ( MysqlDatabase &db , SQLresult &r , string sql ) ;
 
 	DatabaseAbstractionLayer dab ;
 	MultiLimsWarehouseDatabase mlwh ;
+	nlohmann::json subtrack2fits ; // field-to-tag mapping, imported from subtrack2fits.json
 } ;
 
 
