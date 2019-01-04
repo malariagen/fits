@@ -462,4 +462,5 @@ VALUES
   (3617,'Solaris project code','sample metadata','the old, pre-Alfresco Solaris project name; imported from solaris.vw_vrpipe',1,NULL,NULL,NULL,NULL,NULL,NULL),
   (3618,'MLWH LIMS ID','sample metadata','mlwh sample.id_lims (a short string)',1,NULL,NULL,NULL,NULL,NULL,NULL),
   (3619,'MLWH reference genome','sample metadata','mlwh sample.reference_genome (a string)',1,NULL,NULL,NULL,NULL,NULL,NULL),
-  (3620,'MLWH organism','sample metadata','mlwh sample.organism (a string)',1,NULL,NULL,NULL,NULL,NULL,NULL);
+  (3620,'MLWH organism','sample metadata','mlwh sample.organism (a string)',1,NULL,NULL,NULL,NULL,NULL,NULL),
+  (3621,'Human percent mapped','file metadata','mlwh.iseq_product_metrics',1,NULL,NULL,NULL,1,NULL,NULL);

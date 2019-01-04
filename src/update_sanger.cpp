@@ -35,7 +35,8 @@ void UpdateSanger::createMissingFilesFromSubtrack ( vector <string> &id_study_tm
 	sql += " WHERE sub_id=submission.id AND study_id IN (" + lims_study_list + ")" ;
 	sql += " AND (submission.timestamp>=" + subtrack.quote(last_import_from_subtrack_submission) + " OR files.timestamp>=" + subtrack.quote(last_import_from_subtrack_files) + ")" ;
 
-	TField2Tag field2tag = { { "id" , "F:3608" } ,
+	TField2Tag field2tag = {
+		{ "id" , "F:3608" } ,
 		{ "run" , "F:3578" } ,
 		{ "lane" , "F:3571" } ,
 		{ "mux" , "F:3569" } ,
@@ -56,7 +57,7 @@ void UpdateSanger::createMissingFilesFromSubtrack ( vector <string> &id_study_tm
 		{ "rel_now" , "" } ,
 		{ "human_screen" , "" } ,
 		{ "manager" , "" } ,
-		{ "library_type" , "" } ,
+		{ "library_type" , "" } , // NOT 3592!
 		{ "ae_sub_acc" , "" } ,
 		{ "tech" , "" } ,
 		{ "file_filename" , "F:3607" } ,
@@ -174,8 +175,78 @@ void UpdateSanger::createMissingMLWHSamplesForStudies (  vector <string> &id_stu
 	}
 
 	dab.setKV ( "last_import_from_mlwh_sample" , last_import_from_mlwh_sample ) ;
+
+	addMissingSampleMetadata() ;
 }
 
+void UpdateSanger::addMissingSampleMetadata () {
+	addMissingSampleMetadataStudyIDs() ;
+}
+
+void UpdateSanger::addMissingSampleMetadataStudyIDs () {
+	// Add study IDs to samples with missing MLWH study ID but with MLWH sample ID
+	string sql = "SELECT sample_id,value FROM sample2tag WHERE tag_id=1362 AND sample_id NOT IN (SELECT sample_id FROM sample2tag WHERE tag_id=3560)" ;
+	Note note ( "mlwh.iseq_flowcell/mlwh.study" , "Adding study IDs from MLWH" ) ;
+
+	TField2Tag field2tag = {
+		{ "id_study_tmp" , "S:3560" } ,
+		{ "id_lims" , "" } ,
+		{ "uuid_study_lims" , "" } ,
+		{ "id_study_lims" , "S:3593" } ,
+		{ "last_updated" , "" } ,
+		{ "recorded_at" , "" } ,
+		{ "deleted_at" , "" } ,
+		{ "created" , "" } ,
+		{ "name" , "S:3594" } ,
+		{ "reference_genome" , "" } ,
+		{ "ethically_approved" , "" } ,
+		{ "faculty_sponsor" , "" } ,
+		{ "state" , "" } ,
+		{ "study_type" , "" } ,
+		{ "abstract" , "" } ,
+		{ "abbreviation" , "" } ,
+		{ "accession_number" , "S:3611" } ,
+		{ "description" , "" } ,
+		{ "contains_human_dna" , "" } ,
+		{ "contaminated_human_dna" , "" } ,
+		{ "data_release_strategy" , "" } ,
+		{ "data_release_sort_of_study" , "" } ,
+		{ "ena_project_id" , "" } ,
+		{ "study_title" , "" } ,
+		{ "study_visibility" , "" } ,
+		{ "ega_dac_accession_number" , "" } ,
+		{ "array_express_accession_number" , "" } ,
+		{ "ega_policy_accession_number" , "" } ,
+		{ "data_release_timing" , "" } ,
+		{ "data_release_delay_period" , "" } ,
+		{ "data_release_delay_reason" , "" } ,
+		{ "remove_x_and_autosomes" , "" } ,
+		{ "aligned" , "" } ,
+		{ "separate_y_chromosome_data" , "" } ,
+		{ "data_access_group" , "" } ,
+		{ "prelim_id" , "" } ,
+		{ "hmdmc_number" , "" } ,
+		{ "data_destination" , "" } ,
+		{ "s3_email_list" , "" } ,
+		{ "data_deletion_period" , "" }
+	} ;
+
+	SQLresult r ;
+	SQLmap datamap ;
+	query ( dab.ft , r , sql ) ;
+	while ( r.getMap(datamap) ) {
+		string fits_sample_id = datamap["sample_id"].asString() ;
+		string mlwh_sample_id = datamap["value"].asString() ;
+		if ( !isNumeric(mlwh_sample_id) ) continue ; // Paranoia
+		sql = "SELECT * FROM study WHERE id_study_tmp IN (SELECT DISTINCT id_study_tmp FROM iseq_flowcell WHERE id_sample_tmp=" + mlwh_sample_id + ")" ;
+		SQLresult r2 ;
+		SQLmap datamap2 ;
+		query ( mlwh , r2 , sql ) ;
+		while ( r2.getMap(datamap2) ) {
+			updateMetadataInFITS ( fits_sample_id , "" , field2tag , datamap2 , note ) ;
+		}
+	}
+}
 
 void UpdateSanger::addMissingFileMetadata () {
 	addMissingFileMetadataFileType() ;
@@ -184,7 +255,7 @@ void UpdateSanger::addMissingFileMetadata () {
 }
 
 void UpdateSanger::addMissingFileMetadataFileType () {
-	string sql = "SELECT * FROM file WHERE id NOT IN (SELECT file_id FROM file2tag WHERE tag_id=3576)" ;
+	string sql = "SELECT * FROM file WHERE id NOT IN (SELECT file_id FROM file2tag WHERE tag_id=3576)" ; // File type tag
 	Note note ( "fits.file.full_path" , "Adding tag for convenience" ) ;
 	SQLresult r ;
 	SQLmap datamap ;
@@ -296,7 +367,7 @@ void UpdateSanger::addMissingFileMetadataRunLaneMetricsByRL ( string run , strin
 void UpdateSanger::addMissingFileMetadataFlowcellByRLTS ( string run , string lane , string tag_index , string fits_sample_id , string fits_file_id ) {
 	if ( run.empty() || lane.empty() || fits_sample_id.empty() ) return ;
 	if ( !isNumeric(run) || !isNumeric(lane) || !isNumeric(fits_sample_id) ) return ;
-	string sql = "SELECT iseq_flowcell.*,iseq_product_metrics.id_run" ;
+	string sql = "SELECT iseq_flowcell.*,iseq_product_metrics.id_run,iseq_product_metrics.num_reads,iseq_product_metrics.human_percent_mapped" ;
 	sql += " FROM iseq_flowcell,iseq_product_metrics" ;
 	sql += " WHERE iseq_flowcell.id_iseq_flowcell_tmp=iseq_product_metrics.id_iseq_flowcell_tmp" ;
 	sql += " AND id_run=" + run ;
@@ -345,7 +416,7 @@ void UpdateSanger::addMissingFileMetadataFlowcellByRLTS ( string run , string la
 		{ "tag2_set_name" , "" } ,
 		{ "tag2_identifier" , "" } ,
 		{ "is_spiked" , "" } ,
-		{ "pipeline_id_lims" , "" } ,
+		{ "pipeline_id_lims" , "F:3592" } ,
 		{ "bait_name" , "" } ,
 		{ "requested_insert_size_from" , "F:3564" } ,
 		{ "requested_insert_size_to" , "F:3565" } ,
@@ -358,7 +429,9 @@ void UpdateSanger::addMissingFileMetadataFlowcellByRLTS ( string run , string la
 		{ "purpose" , "" } ,
 		{ "suboptimal" , "" } ,
 		{ "primer_panel" , "" } ,
-		{ "id_run" , "F:3578" }
+		{ "id_run" , "F:3578" } ,
+		{ "num_reads" , "F:3577" } ,
+		{ "human_percent_mapped" , "F:3621" }
 	} ;
 	updateMetadataInFITS ( fits_sample_id , fits_file_id , field2tag , datamap , note ) ;
 }
