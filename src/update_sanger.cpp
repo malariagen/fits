@@ -267,8 +267,8 @@ void UpdateSanger::addMissingFileMetadataFlowcellByRLTS ( string run , string la
 	uint32_t cnt = 0 ;
 	while ( r.getMap(datamap) ) cnt++ ;
 	if ( cnt != 1 ) {
-		cout << cnt << " results for run/lane/tag/sample/file:\t" << run << "\t" << lane << "\t" << tag_index << "\t" << fits_sample_id << "\t" << fits_file_id << endl ;
-		cout << sql << endl ;
+//		cout << cnt << " results for run/lane/tag/sample/file:\t" << run << "\t" << lane << "\t" << tag_index << "\t" << fits_sample_id << "\t" << fits_file_id << endl ;
+//		cout << sql << endl ;
 		return ;
 	}
 	updateMetadataInFITS ( fits_sample_id , fits_file_id , "mlwh_flowcell" , datamap , note ) ;

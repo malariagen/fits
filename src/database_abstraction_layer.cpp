@@ -116,8 +116,6 @@ bool DatabaseAbstractionLayer::setTableTag ( string table , string id , string t
     sql += "," + note.getID(ft) ;
     sql += ")" ;
 
-//if ( table == "file2tag" ) { /* cout << sql << endl ; */ return true ; } // TESTING FIXME
-
     ft.exec ( sql ) ;
     return true ;
 }
