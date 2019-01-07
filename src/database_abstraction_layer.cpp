@@ -144,7 +144,6 @@ db_id DatabaseAbstractionLayer::doGetFileID ( string full_path , string filename
 
     SQLmap map ;
     if ( r.getMap(map) ) {
-//        cout << "FOUND FILE " <<  map["id"] << endl ;
         return map["id"].asInt() ;
     }
     if ( !create_if_missing ) return 0 ;
@@ -157,7 +156,6 @@ db_id DatabaseAbstractionLayer::doGetFileID ( string full_path , string filename
         ft.quote(timestamp) + "," +
         ft.quote(storage) + "," +
         note.getID(ft) + ")" ;
-//cout << sql << endl ;
     try {
         ft.exec ( sql ) ;
     } catch ( ... ) {
@@ -167,7 +165,6 @@ db_id DatabaseAbstractionLayer::doGetFileID ( string full_path , string filename
     }
 
     db_id ret = ft.getLastInsertID() ;
-//cout << "=> " << ret << endl << endl ;
     return ret ;
 }
 
