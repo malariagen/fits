@@ -74,7 +74,7 @@ CREATE TABLE `file2tag` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `file_id` int(10) unsigned NOT NULL,
   `tag_id` int(10) unsigned NOT NULL,
-  `value` varchar(128) NOT NULL DEFAULT '',
+  `value` varchar(200) NOT NULL DEFAULT '',
   `note_id` int(11) unsigned NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `file_id_2` (`file_id`,`tag_id`,`value`(200)),
@@ -108,7 +108,7 @@ CREATE TABLE `logs` (
   `table_subject2` int(11) NOT NULL DEFAULT 0 COMMENT 'such as file_relation.child (or 0 if not applicable)',
   `table_tag` int(11) NOT NULL COMMENT 'tag_id (or 0 if not applicable), depending on table_name',
   `action` set('INSERT','UPDATE','DELETE') NOT NULL DEFAULT '',
-  `value` varchar(128) NOT NULL DEFAULT '',
+  `value` varchar(200) NOT NULL DEFAULT '',
   `edit_date` datetime NOT NULL,
   `edit_user` varchar(50) NOT NULL DEFAULT '',
   `note_id` int(11) unsigned NOT NULL,
@@ -133,7 +133,7 @@ CREATE TABLE `sample2tag` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `sample_id` int(10) unsigned NOT NULL,
   `tag_id` int(10) unsigned NOT NULL,
-  `value` varchar(128) NOT NULL DEFAULT '',
+  `value` varchar(200) NOT NULL DEFAULT '',
   `note_id` int(11) unsigned NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `sample_id_2` (`sample_id`,`tag_id`,`value`),
@@ -145,6 +145,13 @@ CREATE TABLE `sample2tag` (
   CONSTRAINT `sample2tag_ibfk_2` FOREIGN KEY (`tag_id`) REFERENCES `tag` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+
+CREATE TABLE `file_json` ( # For "classic", iRODs/baton-fed FITS
+  `file_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `json` mediumblob NOT NULL,
+  `note_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`file_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=517777 DEFAULT CHARSET=utf8;
 
 
 # VIEWS

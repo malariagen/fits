@@ -367,7 +367,7 @@ void UpdateSanger::updateSequenscapeSampleIDfromMLWHsampleID () {
 
 // Adds file JSON from baton where missing
 void UpdateSanger::updateMissingFileJSON () {
-	string sql = "SELECT sample2file.*,(SELECT full_path FROM file WHERE id=file_id) AS full_path,(SELECT value FROM sample2tag WHERE sample2tag.sample_id=sample2file.sample_id AND tag_id=1362) AS mlwh_sample_id FROM sample2file WHERE file_id IN (SELECT id FROM file WHERE id NOT IN (SELECT DISTINCT file_id FROM file2tag WHERE tag_id=3575))" ;
+	string sql = "SELECT sample2file.*,(SELECT full_path FROM file WHERE id=file_id) AS full_path,(SELECT value FROM sample2tag WHERE sample2tag.sample_id=sample2file.sample_id AND tag_id=1362) AS mlwh_sample_id FROM sample2file WHERE file_id IN (SELECT id FROM file WHERE id NOT IN (SELECT DISTINCT file_id FROM file_json))" ;
 	SQLresult r ;
 	SQLmap datamap ;
 	query ( dab.ft , r , sql ) ;
@@ -380,13 +380,13 @@ void UpdateSanger::updateMissingFileJSON () {
 
 
 void UpdateSanger::fixMissingMetadataFromFileAvus ( string missing_tag_id , string avu_key ) {
-	string sql = "SELECT * FROM file2tag ft1 WHERE tag_id=3575 AND file_id NOT IN (SELECT file_id FROM file2tag WHERE tag_id=" + missing_tag_id + ") AND `value` LIKE '%\"" + avu_key + "\"%'" ;
+	string sql = "SELECT * FROM file_json ft1 WHERE file_id NOT IN (SELECT file_id FROM file2tag WHERE tag_id=" + missing_tag_id + ") AND `json` LIKE '%\"" + avu_key + "\"%'" ;
 	SQLresult r ;
 	SQLmap datamap ;
 	query ( dab.ft , r , sql ) ;
 	while ( r.getMap(datamap) ) {
 		string file_id = datamap["file_id"] ;
-		json j = json::parse ( datamap["value"].asString() ) ;
+		json j = json::parse ( datamap["json"].asString() ) ;
 
 		Note note ( "BATON" ) ;
 		for ( auto avu: j["file"]["avus"] ) {
@@ -786,7 +786,7 @@ void UpdateSanger::addFilesForSampleFromBaton ( string mlwh_sample_id , vector <
 			}
 		}
 
-		if ( file_has_id && !dab.fileHasTag ( file_id , "iRODs JSON") ) {
+		if ( file_has_id && !dab.fileHasJSON ( file_id ) ) {
 			string json_info = "{\"file\":"+entry.dump() ;
 			if ( flowcell_found ) {
 				json run_json ;
@@ -794,7 +794,7 @@ void UpdateSanger::addFilesForSampleFromBaton ( string mlwh_sample_id , vector <
 				json_info += ",\"run\":"+run_json.dump() ;
 			}
 			json_info += "}" ;
-			dab.setFileTag ( file_id , "iRODs JSON" , json_info , note ) ;
+			dab.setFileJSON ( file_id , json_info , note ) ;
 		}
 
 	}
@@ -955,6 +955,7 @@ vector <string> UpdateSanger::getOurMLWHstudies() {
 	ret = queryFirstColumn ( mlwh , "SELECT DISTINCT id_study_tmp FROM study WHERE `faculty_sponsor` like '%Kwiatkowski%'" );
 	ret.push_back ( "2104" ) ; // HARDCODED SEQCAP_WGS_Low_coverage_sequencing_of_the_Woloff_from_Gambia, homo sapiens, Richard Durbin
 	ret.push_back ( "2105" ) ; // HARDCODED SEQCAP_WGS_Low_coverage_sequencing_of_the_Mandinka_from_Gambia, homo sapiens, Richard Durbin
+	ret.push_back ( "5320" ) ; // HARDCODED The Malaria Cell Atlas: a comprehensive reference of the Plasmodium life cycle using single-cell RNA-seq; Mara Lawniczak
 
 	std::sort ( ret.begin() , ret.end() ) ;
 	std::unique ( ret.begin() , ret.end() ) ;

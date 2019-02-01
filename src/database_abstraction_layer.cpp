@@ -188,3 +188,16 @@ string DatabaseAbstractionLayer::createNewSample ( string name , Note &note ) {
     ft.exec ( sql ) ;
     return i2s ( ft.getLastInsertID() ) ;
 }
+
+
+bool DatabaseAbstractionLayer::fileHasJSON ( string file_id ) {
+    string sql = "SELECT * FROM file_json WHERE `file_id`=" + file_id ;
+    SQLresult r = ft.query ( sql ) ;
+    SQLmap map ;
+    return r.getMap(map) ;
+}
+
+void DatabaseAbstractionLayer::setFileJSON ( string file_id , string json , Note note ) {
+    string sql = "REPLACE INTO file_json (`file_id`,`json`,`note_id`) VALUES ("+file_id+","+ft.quote(json)+","+note.getID(ft)+")" ;
+    ft.exec ( sql ) ;
+}
