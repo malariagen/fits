@@ -47,6 +47,7 @@ string DatabaseAbstractionLayer::sanitizeTagName ( string tag_name ) {
 db_id DatabaseAbstractionLayer::getTagID ( string tag_name ) {
     loadTags() ;
     tag_name = sanitizeTagName ( tag_name ) ;
+    if ( isNumeric(tag_name) ) return s2i(tag_name) ;
     for ( auto &tag:tags ) {
         if ( tag.name == tag_name ) return tag.id ;
     }
@@ -115,8 +116,6 @@ bool DatabaseAbstractionLayer::setTableTag ( string table , string id , string t
     sql += "," + note.getID(ft) ;
     sql += ")" ;
 
-//if ( table == "file2tag" ) { /* cout << sql << endl ; */ return true ; } // TESTING FIXME
-
     ft.exec ( sql ) ;
     return true ;
 }
@@ -145,7 +144,6 @@ db_id DatabaseAbstractionLayer::doGetFileID ( string full_path , string filename
 
     SQLmap map ;
     if ( r.getMap(map) ) {
-//        cout << "FOUND FILE " <<  map["id"] << endl ;
         return map["id"].asInt() ;
     }
     if ( !create_if_missing ) return 0 ;
@@ -158,7 +156,6 @@ db_id DatabaseAbstractionLayer::doGetFileID ( string full_path , string filename
         ft.quote(timestamp) + "," +
         ft.quote(storage) + "," +
         note.getID(ft) + ")" ;
-//cout << sql << endl ;
     try {
         ft.exec ( sql ) ;
     } catch ( ... ) {
@@ -168,6 +165,39 @@ db_id DatabaseAbstractionLayer::doGetFileID ( string full_path , string filename
     }
 
     db_id ret = ft.getLastInsertID() ;
-//cout << "=> " << ret << endl << endl ;
     return ret ;
+}
+
+string DatabaseAbstractionLayer::getKV ( string key , string default_value ) {
+    string sql = "SELECT `kv_value` FROM `kv` WHERE `kv_key`=" + ft.quote(key) ;
+    SQLresult r ;
+    r = ft.query ( sql ) ;
+    SQLmap map ;
+    if ( r.getMap(map) ) return map["kv_value"].asString() ;
+    return default_value ;
+}
+
+void DatabaseAbstractionLayer::setKV ( string key , string value ) {
+    if ( key.empty() ) return ; // Paranoia
+    string sql = "REPLACE INTO kv (kv_key,kv_value) VALUES (" + ft.quote(key) + "," + ft.quote(value) + ")" ;
+    ft.exec ( sql ) ;
+}
+
+string DatabaseAbstractionLayer::createNewSample ( string name , Note &note ) {
+    string sql = "INSERT INTO sample (name,note_id) VALUES (" + ft.quote(name) + "," + note.getID(ft) + ")" ;
+    ft.exec ( sql ) ;
+    return i2s ( ft.getLastInsertID() ) ;
+}
+
+
+bool DatabaseAbstractionLayer::fileHasJSON ( string file_id ) {
+    string sql = "SELECT * FROM file_json WHERE `file_id`=" + file_id ;
+    SQLresult r = ft.query ( sql ) ;
+    SQLmap map ;
+    return r.getMap(map) ;
+}
+
+void DatabaseAbstractionLayer::setFileJSON ( string file_id , string json , Note note ) {
+    string sql = "REPLACE INTO file_json (`file_id`,`json`,`note_id`) VALUES ("+file_id+","+ft.quote(json)+","+note.getID(ft)+")" ;
+    ft.exec ( sql ) ;
 }

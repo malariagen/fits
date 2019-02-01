@@ -3,6 +3,7 @@
 
 #include "tools.h"
 #include "database_abstraction_layer.h"
+#include "json.hpp"
 
 
 class UpdateSanger : public StringTools {
@@ -12,7 +13,10 @@ public:
 	void updatePivotView ( string table ) ;
 
 protected:
+//	typedef vector <pair <string,string> > TField2Tag ;
+
 	void report ( string s ) ;
+	void die ( string s ) ;
 	vector <string> getOurMLWHstudies() ;
 //	void processFlowcell ( SQLmap &map ) ;
 	string getBatonCommandForSequenscapeSample ( string sequenscape_sample_id ) ;
@@ -34,12 +38,29 @@ protected:
 	void updateSampleMetadata ( db_id fits_sample_id ) ;
 	vector <string> getMLWHSampleIDsWithoutFiles () ;
 	bool isFlowcellMissingFile ( string id_iseq_flowcell_tmp ) ;
+	void updateFromMLWHandIRODS () ;
+	void updateFromMLWHandSubtrack () ;
+	vector <string> MLWHstudies2limsStudies ( vector <string> &id_study_tmp ) ;
+	void createMissingMLWHSamplesForStudies (  vector <string> &id_study_tmp ) ;
+	void createMissingFilesFromSubtrack ( vector <string> &id_study_tmp ) ;
+	void updateMetadataInFITS ( string fits_sample_id , string fits_file_id , string field2tag , SQLmap &datamap , Note &note ) ;
+	void getSampleMapSequenscapeToFITS ( map <string,string> &sample_lims2fits ) ;
+	void addMissingFileMetadata () ;
+	void addMissingFileMetadataFileType () ;
+	void addMissingFileMetadataFileSize () ;
+	void addMissingFileMetadataFlowcell () ;
+	void addMissingFileMetadataFlowcellByRLTS ( string run , string lane , string tag_index , string fits_sample_id , string fits_file_id ) ;
+	void addMissingFileMetadataRunLaneMetricsByRL ( string run , string lane , string fits_file_id ) ;
+	void addMissingSampleMetadata () ;
+	void addMissingSampleMetadataStudyIDs () ;
+	void addMissingSampleMetadataMLWHforLIMS () ;
 
 	vector <string> queryFirstColumn ( MysqlDatabase &db , string sql ) ;
 	void query ( MysqlDatabase &db , SQLresult &r , string sql ) ;
 
 	DatabaseAbstractionLayer dab ;
 	MultiLimsWarehouseDatabase mlwh ;
+	nlohmann::json subtrack2fits ; // field-to-tag mapping, imported from subtrack2fits.json
 } ;
 
 

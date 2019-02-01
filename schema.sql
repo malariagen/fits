@@ -74,7 +74,7 @@ CREATE TABLE `file2tag` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `file_id` int(10) unsigned NOT NULL,
   `tag_id` int(10) unsigned NOT NULL,
-  `value` mediumtext,
+  `value` varchar(200) NOT NULL DEFAULT '',
   `note_id` int(11) unsigned NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `file_id_2` (`file_id`,`tag_id`,`value`(200)),
@@ -94,7 +94,7 @@ CREATE TABLE `id_iseq_flowcell_tmp_no_file` (
 
 CREATE TABLE `kv` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `kv_key` varchar(32) NOT NULL DEFAULT '',
+  `kv_key` varchar(128) NOT NULL DEFAULT '',
   `kv_value` varchar(255) NOT NULL DEFAULT '',
   PRIMARY KEY (`id`),
   UNIQUE KEY `kv_key` (`kv_key`)
@@ -108,7 +108,7 @@ CREATE TABLE `logs` (
   `table_subject2` int(11) NOT NULL DEFAULT 0 COMMENT 'such as file_relation.child (or 0 if not applicable)',
   `table_tag` int(11) NOT NULL COMMENT 'tag_id (or 0 if not applicable), depending on table_name',
   `action` set('INSERT','UPDATE','DELETE') NOT NULL DEFAULT '',
-  `value` mediumtext,
+  `value` varchar(200) NOT NULL DEFAULT '',
   `edit_date` datetime NOT NULL,
   `edit_user` varchar(50) NOT NULL DEFAULT '',
   `note_id` int(11) unsigned NOT NULL,
@@ -133,7 +133,7 @@ CREATE TABLE `sample2tag` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `sample_id` int(10) unsigned NOT NULL,
   `tag_id` int(10) unsigned NOT NULL,
-  `value` varchar(128) NOT NULL DEFAULT '',
+  `value` varchar(200) NOT NULL DEFAULT '',
   `note_id` int(11) unsigned NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `sample_id_2` (`sample_id`,`tag_id`,`value`),
@@ -145,6 +145,13 @@ CREATE TABLE `sample2tag` (
   CONSTRAINT `sample2tag_ibfk_2` FOREIGN KEY (`tag_id`) REFERENCES `tag` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+
+CREATE TABLE `file_json` ( # For "classic", iRODs/baton-fed FITS
+  `file_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `json` mediumblob NOT NULL,
+  `note_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`file_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=517777 DEFAULT CHARSET=utf8;
 
 
 # VIEWS
@@ -399,9 +406,6 @@ END ;$$
 # TAG DATA
 
 
-LOCK TABLES `tag` WRITE;
-/*!40000 ALTER TABLE `tag` DISABLE KEYS */;
-
 INSERT INTO `tag` (`id`, `name`, `type`, `note`, `use_for_pivot`, `min_sample`, `max_sample`, `min_file`, `max_file`, `avu_field`, `iseq_flowcell_field`)
 VALUES
   (1,'iRODS sequencing','storage',NULL,1,NULL,NULL,NULL,NULL,NULL,NULL),
@@ -462,7 +466,8 @@ VALUES
   (3614,'sequenscape library lims ID','file metadata','[Cathrine Baker]: \"is the \'Human barcode\', a readable barcode label that is used physically in the lab\"',1,NULL,NULL,NULL,1,NULL,'id_library_lims'),
   (3615,'sequenscape library name','file metadata','[Cathrine Baker]: \"is the library generated- same as [tag 3613]\"',1,NULL,NULL,NULL,1,'library',NULL),
   (3616,'Solaris study group','sample metadata','means \"species\"; imported from solaris.vw_vrpipe',1,NULL,1,NULL,NULL,NULL,NULL),
-  (3617,'Solaris project code','sample metadata','the old, pre-Alfresco Solaris project name; imported from solaris.vw_vrpipe',1,NULL,NULL,NULL,NULL,NULL,NULL);
-
-/*!40000 ALTER TABLE `tag` ENABLE KEYS */;
-UNLOCK TABLES;
+  (3617,'Solaris project code','sample metadata','the old, pre-Alfresco Solaris project name; imported from solaris.vw_vrpipe',1,NULL,NULL,NULL,NULL,NULL,NULL),
+  (3618,'MLWH LIMS ID','sample metadata','mlwh sample.id_lims (a short string)',1,NULL,NULL,NULL,NULL,NULL,NULL),
+  (3619,'MLWH reference genome','sample metadata','mlwh sample.reference_genome (a string)',1,NULL,NULL,NULL,NULL,NULL,NULL),
+  (3620,'MLWH organism','sample metadata','mlwh sample.organism (a string)',1,NULL,NULL,NULL,NULL,NULL,NULL),
+  (3621,'Human percent mapped','file metadata','mlwh.iseq_product_metrics',1,NULL,NULL,NULL,1,NULL,NULL);
